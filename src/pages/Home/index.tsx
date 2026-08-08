@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { Gift, Zap, Sparkles, Play } from 'lucide-react'
 import logoMemeZone from '@assets/Logo/LogoMemeZone.webp'
+import { GridScan } from '@components/home/GridScan'
 
 export function Home() {
   const navigate = useNavigate()
@@ -10,23 +11,44 @@ export function Home() {
      
       
  {/* Featured Large Card */}
-      <div className="px-2">
-        
-          
-          
-          <img src={logoMemeZone} alt="Meme Zone" className="relative w-60 h-60 mx-auto mb-6 object-contain drop-shadow-2xl" />
-          
-          
-          <p className="relative text-white/50 text-sm mb-6 max-w-[200px] mx-auto">Create viral memes every day!</p>
-          
-          <button 
-            onClick={() => navigate('/editor')}
-            className="relative w-full py-4 rounded-2xl bg-[#229ED9] font-bold text-lg shadow-[0_0_20px_rgba(34,158,217,0.3)] hover:bg-[#2AABEE] transition-all flex items-center justify-center gap-2"
-          >
-            <Play className="fill-current w-5 h-5" />
-            CREATE MEME
-          </button>
+      <div>
+        <div className="bg-transparent text-center relative overflow-hidden">
 
+          {/* GridScan background — zero padding, sticks to all sides */}
+          <div style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', zIndex: 0 }}>
+            <GridScan
+              sensitivity={0.55}
+              lineThickness={1.1}
+              linesColor="#4f2797"
+              gridScale={0.09}
+              scanColor="#2654d1"
+              scanOpacity={0.4}
+              enablePost={false}
+              bloomIntensity={0.6}
+              chromaticAberration={0.001}
+              noiseIntensity={0.01}
+              lineJitter={0}
+              scanGlow={0.6}
+              scanSoftness={2}
+              enableWebcam={false}
+              showPreview={false}
+            />
+          </div>
+
+          {/* Inner content — own padding, independent of GridScan */}
+          <div className="relative px-6 pb-6">
+            <img src={logoMemeZone} alt="Meme Zone" className="w-60 h-60 mx-auto mt-28 mb-6 object-contain drop-shadow-2xl" />
+            <p className="text-white/50 text-sm mb-6 max-w-[200px] mx-auto">Create viral memes every day!</p>
+            <button
+              onClick={() => navigate('/editor')}
+              className="w-full py-4 rounded-2xl bg-[#229ED9] font-bold text-lg shadow-[0_0_20px_rgba(34,158,217,0.3)] hover:bg-[#2AABEE] transition-all flex items-center justify-center gap-2"
+            >
+              <Play className="fill-current w-5 h-5" />
+              CREATE MEME
+            </button>
+          </div>
+
+        </div>
       </div>
       {/* Two banners side-by-side */}
       <div className="flex gap-3 px-2">
