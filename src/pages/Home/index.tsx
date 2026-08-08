@@ -11,10 +11,10 @@ export function Home() {
       
  {/* Featured Large Card */}
       <div className="px-2">
-        <div className="bg-[#141416] border border-white/10 rounded-[2rem] p-6 text-center relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-full h-full bg-[#141416] pointer-events-none" />
+        
           
-          <img src={logoMemeZone} alt="Meme Zone" className="relative w-32 h-32 mx-auto mb-6 object-contain drop-shadow-2xl" />
+          
+          <img src={logoMemeZone} alt="Meme Zone" className="relative w-60 h-60 mx-auto mb-6 object-contain drop-shadow-2xl" />
           
           
           <p className="relative text-white/50 text-sm mb-6 max-w-[200px] mx-auto">Create viral memes every day!</p>
@@ -26,7 +26,7 @@ export function Home() {
             <Play className="fill-current w-5 h-5" />
             CREATE MEME
           </button>
-        </div>
+
       </div>
       {/* Two banners side-by-side */}
       <div className="flex gap-3 px-2">

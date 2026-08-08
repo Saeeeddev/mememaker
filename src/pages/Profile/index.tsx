@@ -17,7 +17,7 @@ const Profile = () => {
           <GradientWaves
             horizonColor="#229ED9"
             waveColor="#2AABEE"
-            crestColor="#202B36"
+            crestColor="#cfdce9"
             speed={1.25}
             amplitude={1.9}
             waveScale={1.05}
