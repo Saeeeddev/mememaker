@@ -9,7 +9,7 @@ export function Shop() {
   if (loading) return <ShopSkeleton />
 
   return (
-    <div className="pb-10">
+    <div className="relative pb-10">
       <div className="flex flex-col items-center pt-6 pb-6">
         <div className="w-16 h-16 bg-purple-500/20 rounded-full flex items-center justify-center mb-4">
           <Store className="w-8 h-8 text-purple-400" />
@@ -20,7 +20,7 @@ export function Shop() {
 
       <div className="grid grid-cols-2 gap-3 px-2">
         {items.map((item) => (
-          <ShopItem key={item.id} item={item} />
+          <ShopItem key={item.id} item={item} disabled />
         ))}
       </div>
     </div>

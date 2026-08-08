@@ -4,18 +4,20 @@ import { Sparkles, Diamond } from 'lucide-react'
 interface ShopItemProps {
   item: IShopItem
   onBuy?: (item: IShopItem) => void
+  disabled?: boolean
 }
 
-export function ShopItem({ item, onBuy }: ShopItemProps) {
+export function ShopItem({ item, onBuy, disabled = false }: ShopItemProps) {
   const Icon = item.currency === 'stars' ? Sparkles : Diamond
+  const isDisabled = disabled || !item.available
 
   return (
-    <div className="bg-[#1a1a2e] border border-white/5 rounded-2xl p-4 flex flex-col h-full">
-      <div className="aspect-square rounded-xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 mb-4 flex items-center justify-center">
+    <div className="bg-[#141416] border border-white/5 rounded-2xl p-4 flex flex-col h-full opacity-60">
+      <div className="aspect-square rounded-xl bg-[#2C2C2E] mb-4 flex items-center justify-center">
         {item.image ? (
           <img src={item.image} alt={item.name} className="w-20 h-20 object-contain" />
         ) : (
-          <div className="w-16 h-16 rounded-full bg-white/10" />
+          <div className="w-16 h-16 rounded-full bg-[#2C2C2E]" />
         )}
       </div>
 
@@ -26,11 +28,11 @@ export function ShopItem({ item, onBuy }: ShopItemProps) {
 
       <button
         onClick={() => onBuy?.(item)}
-        disabled={!item.available}
+        disabled={isDisabled}
         className={`mt-4 w-full py-2 rounded-xl flex items-center justify-center gap-2 font-semibold transition-colors ${
-          item.available
-            ? 'bg-blue-500/10 text-blue-400 hover:bg-blue-500/20'
-            : 'bg-white/5 text-white/20'
+          isDisabled
+            ? 'bg-[#2C2C2E] text-white/25 cursor-not-allowed'
+            : 'bg-[#229ED9]/10 text-[#2AABEE] hover:bg-[#229ED9]/20'
         }`}
       >
         <span>{item.price}</span>

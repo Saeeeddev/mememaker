@@ -6,7 +6,7 @@ export function AppShell() {
   const location = useLocation()
 
   return (
-    <div className="min-h-dvh bg-[#0d0d1a] text-white overflow-hidden flex flex-col relative">
+    <div className="min-h-dvh bg-[#000000] text-white overflow-hidden flex flex-col relative">
       <main className="flex-1 overflow-y-auto pb-[calc(7rem+env(safe-area-inset-bottom))] pt-4 px-4 custom-scrollbar">
         <AnimatePresence mode="wait">
           <motion.div

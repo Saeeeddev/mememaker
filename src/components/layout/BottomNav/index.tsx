@@ -7,7 +7,7 @@ export function BottomNav() {
   const location = useLocation()
 
   const navItems = [
-    { path: '/shop', label: 'Shop', icon: ShoppingBag },
+    { path: '/shop', label: 'Shop', icon: ShoppingBag, disabled: true },
     { path: '/', label: 'Home', icon: Home },
     { path: '/tasks', label: 'Task', icon: Zap },
     { path: '/profile', label: 'Profile', icon: User },
@@ -67,6 +67,45 @@ export function BottomNav() {
                 {navItems.map((item) => {
                   const isActive = location.pathname === item.path
                   const Icon = item.icon
+                  const disabled = item.disabled
+
+                  const content = (
+                    <>
+                      {!disabled && isActive && (
+                        <motion.div
+                          layoutId="active-nav-capsule"
+                          className="absolute inset-0 rounded-[31px] bg-white/[0.055] shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_4px_18px_rgba(0,0,0,0.18)]"
+                          transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                        />
+                      )}
+                      {disabled && (
+                        <span className="absolute left-1/2 top-[19px] z-20 min-w-[46px] -translate-x-1/2 rounded-md bg-[#229ED9] px-2 py-1 text-center text-[10px] font-extrabold uppercase leading-none text-white shadow-[0_4px_12px_rgba(34,158,217,0.35)]">
+                          Soon
+                        </span>
+                      )}
+                      <Icon
+                        className={`relative z-10 mb-[7px] h-[25px] w-[25px] ${!disabled && isActive ? 'drop-shadow-[0_0_7px_rgba(34,158,217,0.62)]' : ''}`}
+                        strokeWidth={!disabled && isActive ? 2.5 : 2}
+                      />
+                      <span className="relative z-10 text-[11px] font-medium leading-none tracking-normal">
+                        {item.label}
+                      </span>
+                    </>
+                  )
+
+                  if (disabled) {
+                    return (
+                      <button
+                        key={item.path}
+                        type="button"
+                        disabled
+                        aria-disabled="true"
+                        className="relative flex h-[62px] w-[70px] flex-col items-center justify-center rounded-[31px] font-sans text-[#a5a8ae]/60 cursor-not-allowed"
+                      >
+                        {content}
+                      </button>
+                    )
+                  }
 
                   return (
                     <NavLink
@@ -76,20 +115,7 @@ export function BottomNav() {
                         isActive ? 'text-[#229ED9]' : 'text-[#a5a8ae] hover:text-[#d9dbe0]'
                       }`}
                     >
-                      {isActive && (
-                        <motion.div
-                          layoutId="active-nav-capsule"
-                          className="absolute inset-0 rounded-[31px] bg-white/[0.055] shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_4px_18px_rgba(0,0,0,0.18)]"
-                          transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                        />
-                      )}
-                      <Icon
-                        className={`relative z-10 mb-[7px] h-[25px] w-[25px] ${isActive ? 'drop-shadow-[0_0_7px_rgba(34,158,217,0.62)]' : ''}`}
-                        strokeWidth={isActive ? 2.5 : 2}
-                      />
-                      <span className="relative z-10 text-[11px] font-medium leading-none tracking-normal">
-                        {item.label}
-                      </span>
+                      {content}
                     </NavLink>
                   )
                 })}

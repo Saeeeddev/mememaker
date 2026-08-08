@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { ChevronRight, ChevronDown, Copy, Users } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
+import gramDiamondMark from '@assets/icons/GramDiamondMark.png'
 
 export const InviteFriends = () => {
   const [expanded, setExpanded] = useState(false)
@@ -58,7 +59,7 @@ export const InviteFriends = () => {
                 <div>
                   <div className="flex items-end gap-1">
                     <span className="text-white font-bold text-2xl">0.00</span>
-                    <span className="text-white text-lg pb-0.5">▽</span>
+                    <img src={gramDiamondMark} alt="" className="h-[17px] w-[17px] object-contain mb-1" />
                   </div>
                   <span className="text-[#8a8f98] text-[13px]">Available to withdraw</span>
                 </div>
@@ -72,7 +73,8 @@ export const InviteFriends = () => {
                   </div>
                   <div className="bg-white/5 rounded-[12px] p-3 flex flex-col items-center justify-center gap-1">
                     <div className="flex items-center gap-1.5 text-white font-bold text-lg">
-                      0.00 ▽
+                      0.00
+                      <img src={gramDiamondMark} alt="" className="h-[13px] w-[13px] object-contain" />
                     </div>
                     <span className="text-[#8a8f98] text-[12px]">Total withdrawn</span>
                   </div>

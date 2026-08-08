@@ -16,7 +16,7 @@ export function TaskList({ tasks, onTaskAction }: TaskListProps) {
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2.5">
       {tasks.map((task) => (
         <TaskCard key={task.id} task={task} onAction={onTaskAction} />
       ))}
