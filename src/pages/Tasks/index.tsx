@@ -10,7 +10,7 @@ export function Tasks() {
   const completedCount = tasks.filter(t => t.completed).length
 
   return (
-    <div className="pb-10 pt-2">
+    <div className="pt-2">
       <div className="mb-4 flex items-center justify-between px-1">
         <div className="flex items-center gap-3">
           

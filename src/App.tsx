@@ -10,7 +10,7 @@ import ShopPage from '@pages/Shop'
 import EditorPage from '@pages/Editor'
 import LoadingLogo from '@components/ui/LoadingLogofirst'
 
-const SPLASH_DURATION = 2000 // 2 seconds
+const SPLASH_DURATION = 5000 // 2 seconds
 
 function App() {
   const [showSplash, setShowSplash] = useState(true)

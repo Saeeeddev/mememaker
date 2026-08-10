@@ -306,7 +306,7 @@ export function Editor() {
   // ─────────────────────────────────────
   if (step === 'pick') {
     return (
-      <div className="flex flex-col min-h-[calc(100dvh-100px)] bg-black -mx-4 -mt-4 pb-28">
+      <div className="flex flex-col min-h-[calc(100dvh-100px)] bg-black -mx-4 -mt-4">
         {/* Header */}
         <div className="px-4 pt-5 pb-3">
           <h1 className="text-white font-bold text-[22px] mb-0.5">Meme Zone <span className="text-2xl"></span></h1>
@@ -424,7 +424,7 @@ export function Editor() {
   // STEP 2 — Edit canvas
   // ─────────────────────────────────────
   return (
-    <div className="flex flex-col min-h-[calc(100dvh-100px)] bg-black -mx-4 -mt-4 pb-28 relative">
+    <div className="flex flex-col min-h-[calc(100dvh-100px)] bg-black -mx-4 -mt-4 relative">
       {/* Top bar */}
       <div className="flex items-center gap-3 px-4 pt-4 pb-3">
         <button

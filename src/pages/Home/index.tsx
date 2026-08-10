@@ -7,7 +7,7 @@ export function Home() {
   const navigate = useNavigate()
 
   return (
-    <div className="pb-10 space-y-6 pt-2 bg-[#000000]">
+    <div className="space-y-6 pt-2 bg-[#000000]">
      
       
  {/* Featured Large Card */}
