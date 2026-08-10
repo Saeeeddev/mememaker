@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { ChevronRight, ChevronDown, Copy, Users } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
-import gramDiamondMark from '@assets/icons/GramDiamondMark.png'
 
 export const InviteFriends = () => {
   const [expanded, setExpanded] = useState(false)
@@ -41,7 +40,7 @@ export const InviteFriends = () => {
             <div className="flex flex-col gap-3.5">
               {/* Description */}
               <p className="text-[#8a8f98] text-[14px] leading-relaxed">
-                Invite referrals and get <span className="bg-[#1f3a52] px-2 py-0.5 rounded-full text-[#56b6ff] font-bold text-[12.5px] mx-1">10%</span> from their deposits
+                Invite referrals and get <span className="bg-[#1f3a52] px-2 py-0.5 rounded-full text-[#56b6ff] font-bold text-[12.5px] mx-1">10%</span> from their Stars deposits
               </p>
 
               {/* Action Buttons */}
@@ -57,11 +56,13 @@ export const InviteFriends = () => {
               {/* Stats Box */}
               <div className="bg-[#1c1c1e] rounded-[14px] p-4 flex flex-col gap-3.5 border border-[#35363a]">
                 <div>
-                  <div className="flex items-end gap-1">
-                    <span className="text-white font-bold text-2xl">0.00</span>
-                    <img src={gramDiamondMark} alt="" className="h-[17px] w-[17px] object-contain mb-1" />
+                  <div className="flex items-end gap-1.5">
+                    <span className="text-white font-bold text-2xl">0</span>
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="#F5A623" className="mb-1">
+                      <path d="M12 2.5l2.9 6.3 6.9.7-5.2 4.7 1.5 6.8L12 17.6 5.9 21l1.5-6.8-5.2-4.7 6.9-.7L12 2.5z" />
+                    </svg>
                   </div>
-                  <span className="text-[#8a8f98] text-[13px]">Available to withdraw</span>
+                  <span className="text-[#8a8f98] text-[13px]">Stars available</span>
                 </div>
 
                 <div className="grid grid-cols-2 gap-2.5 mt-0.5">
@@ -73,16 +74,14 @@ export const InviteFriends = () => {
                   </div>
                   <div className="bg-white/5 rounded-[12px] p-3 flex flex-col items-center justify-center gap-1">
                     <div className="flex items-center gap-1.5 text-white font-bold text-lg">
-                      0.00
-                      <img src={gramDiamondMark} alt="" className="h-[13px] w-[13px] object-contain" />
+                      0
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="#F5A623">
+                        <path d="M12 2.5l2.9 6.3 6.9.7-5.2 4.7 1.5 6.8L12 17.6 5.9 21l1.5-6.8-5.2-4.7 6.9-.7L12 2.5z" />
+                      </svg>
                     </div>
-                    <span className="text-[#8a8f98] text-[12px]">Total withdrawn</span>
+                    <span className="text-[#8a8f98] text-[12px]">Stars earned</span>
                   </div>
                 </div>
-
-                <button className="w-full bg-white/5 text-white/30 font-semibold text-[14px] rounded-[14px] py-2.5 mt-0.5 cursor-not-allowed">
-                  Claim
-                </button>
               </div>
             </div>
           </motion.div>

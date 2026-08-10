@@ -11,6 +11,13 @@ export const StarsTab = () => {
     setAmount(nextAmount)
   }
 
+  const handleTopUp = () => {
+    const num = parseInt(amount)
+    if (!num || num <= 0) return
+    // TODO: wire up Telegram Stars payment
+    alert(`Topping up ${num} Stars…`)
+  }
+
   return (
     <div className="flex flex-col items-center px-4 pb-8 w-full">
       {/* Stars Pill */}
@@ -28,21 +35,19 @@ export const StarsTab = () => {
             inputMode="numeric"
             value={amount}
             onChange={(e) => updateAmount(e.target.value)}
-            className="text-white font-extrabold leading-none bg-transparent min-w-[1ch] text-right outline-none placeholder:text-white"
+            className="text-white font-extrabold leading-none bg-transparent min-w-[1ch] text-center outline-none placeholder:text-white"
             style={{
               width: `${Math.max(displayAmount.length, 1)}ch`,
-              maxWidth: 'calc(100vw - 152px)',
+              maxWidth: 'calc(100vw - 48px)',
               fontSize: `${amountFontSize}px`,
             }}
             placeholder="0"
           />
-          <div className="w-0.5 h-[76px] bg-[#229ED9]/80 mx-4 shrink-0"></div>
-          <span className="text-[52px] leading-none drop-shadow-[0_0_16px_rgba(255,171,28,0.9)]">⭐</span>
         </div>
       </div>
 
       {/* Presets Grid */}
-      <div className="grid grid-cols-4 gap-2.5 w-full">
+      <div className="grid grid-cols-4 gap-2.5 w-full mb-5">
         {presets.map((preset) => (
           <button 
             key={preset}
@@ -54,6 +59,18 @@ export const StarsTab = () => {
           </button>
         ))}
       </div>
+
+      {/* Top Up Button */}
+      <button
+        onClick={handleTopUp}
+        disabled={!parseInt(amount)}
+        className="w-full py-4 rounded-[18px] font-extrabold text-[16px] transition-all
+          bg-[#229ED9] text-white shadow-[0_6px_24px_rgba(34,158,217,0.45)]
+          hover:bg-[#2AABEE] active:scale-[0.98]
+          disabled:opacity-35 disabled:cursor-not-allowed disabled:shadow-none"
+      >
+        Top Up ⭐ {parseInt(amount) > 0 ? parseInt(amount).toLocaleString() : ''} Stars
+      </button>
     </div>
   )
 }

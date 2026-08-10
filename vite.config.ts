@@ -21,4 +21,8 @@ export default defineConfig({
       '@store': resolve(import.meta.dirname, './src/store'),
     },
   },
+  // Serve index.html for all routes so React Router handles them (fixes 404 on refresh)
+  server: {
+    historyApiFallback: true,
+  },
 })

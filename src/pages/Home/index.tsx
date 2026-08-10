@@ -37,7 +37,7 @@ export function Home() {
 
           {/* Inner content — own padding, independent of GridScan */}
           <div className="relative px-6 pb-6">
-            <img src={logoMemeZone} alt="Meme Zone" className="w-60 h-60 mx-auto mt-36 mb-6 object-contain drop-shadow-2xl" />
+            <img src={logoMemeZone} alt="Meme Zone" className="w-60 h-60 mx-auto mt-42 mb-6 object-contain drop-shadow-2xl" />
             <p className="text-white/50 text-sm mb-6 max-w-[200px] mx-auto">Create viral memes every day!</p>
             <button
               onClick={() => navigate('/editor')}

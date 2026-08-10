@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import type { TelegramUser } from '@/types/telegram'
 
-type TopupTab = 'stars' | 'ton'
+type TopupTab = 'stars'
 
 interface AppState {
   // Telegram user
@@ -32,7 +32,7 @@ export const useAppStore = create<AppState>((set) => ({
 
   topupOpen: false,
   topupTab: 'stars',
-  openTopup: (tab = 'stars') => set({ topupOpen: true, topupTab: tab }),
+  openTopup: (tab?: TopupTab) => set({ topupOpen: true, topupTab: tab ?? 'stars' }),
   closeTopup: () => set({ topupOpen: false }),
 
   settingsOpen: false,
