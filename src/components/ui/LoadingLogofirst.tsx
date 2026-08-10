@@ -1,4 +1,3 @@
-import React from "react";
 
 // Colors sampled directly from the source image
 const FRAME_BLUE = "#00BCFB";

@@ -22,7 +22,5 @@ export default defineConfig({
     },
   },
   // Serve index.html for all routes so React Router handles them (fixes 404 on refresh)
-  server: {
-    historyApiFallback: true,
-  },
+  // Note: Vite handles SPA fallback automatically in dev. For prod, configure your host (Vercel rewrites, nginx try_files, etc.)
 })
