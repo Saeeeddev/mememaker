@@ -9,7 +9,7 @@ const Profile = () => {
   const { openTopup } = useAppStore()
 
   return (
-    <div className="flex flex-col min-h-[calc(100dvh+7rem)] bg-black relative pb-28 -mx-4 -mt-4 -mb-[calc(7rem+env(safe-area-inset-bottom))]">
+    <div className="flex flex-col min-h-dvh overflow-hidden bg-black relative -mx-4 -mt-4 -mb-[calc(7rem+env(safe-area-inset-bottom))]">
       {/* Hero balance panel */}
       <div className="relative overflow-hidden pt-7 pb-9 text-center bg-[#202B36]">
         <div className="absolute inset-0">
@@ -84,7 +84,7 @@ const Profile = () => {
       </div>
 
       {/* Content sheet */}
-      <div className="bg-black -mt-3.5 rounded-t-[22px] relative z-2 px-4 pt-[18px] pb-24">
+      <div className="bg-black -mt-3.5 rounded-t-[22px] relative z-2 px-4 pt-[18px]">
         {/* Profile row */}
         <ProfileHeader />
 
