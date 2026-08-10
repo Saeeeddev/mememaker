@@ -48,9 +48,16 @@ function App() {
         <div
           style={{
             position: 'fixed',
-            inset: 0,
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            width: '100%',
+            height: '100%',
             zIndex: 9999,
+            background: '#000000',
             opacity: fadeOut ? 0 : 1,
+            WebkitTransition: 'opacity 0.4s ease',
             transition: 'opacity 0.4s ease',
             pointerEvents: fadeOut ? 'none' : 'all',
           }}

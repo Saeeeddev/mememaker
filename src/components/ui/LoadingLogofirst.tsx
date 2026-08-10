@@ -1,11 +1,8 @@
-
 // Colors sampled directly from the source image
 const FRAME_BLUE = "#00BCFB";
 const DOT_GRAY = "#9198A8";
 const BG_BLACK = "#000000";
 
-// Outer rounded-square outline, traced from the image (evenodd combined with
-// innerPath below to create the frame cutout)
 const outerPath =
   "M1058,227 L1042,211 L1019,194 L1000,184 L979,176 L952,169 L922,165 L864,165 " +
   "L492,212 L404,225 L356,240 L331,252 L304,268 L277,289 L246,323 L224,357 " +
@@ -15,7 +12,6 @@ const outerPath =
   "L991,906 L1009,884 L1026,858 L1035,840 L1049,802 L1055,775 L1097,370 " +
   "L1097,325 L1091,290 L1079,259 L1070,243 Z";
 
-// Inner cutout (the "hole" in the frame), traced from the image
 const innerPath =
   "M894,358 L905,380 L907,388 L908,407 L904,433 L904,443 L902,451 L899,489 " +
   "L888,588 L886,596 L872,730 L868,751 L859,771 L852,782 L834,800 L814,812 " +
@@ -24,15 +20,16 @@ const innerPath =
   "L401,416 L415,402 L437,388 L465,380 L726,349 L830,335 L850,335 L868,339 " +
   "L884,348 Z";
 
-// Dot: resting center (624.5, 606), radius 69.5, traveling down to ~769.5
-// so its edge touches the inner surface, then returning to its original spot
 export default function LoadingLogo() {
   return (
+    // Use explicit top/left/right/bottom instead of `inset` — iOS < 14.5 doesn't support inset
     <div
       style={{
-        width: "100%",
-        height: "100%",
-        minHeight: "100vh",
+        position: "fixed",
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
         background: BG_BLACK,
         display: "flex",
         flexDirection: "column",
@@ -41,63 +38,103 @@ export default function LoadingLogo() {
         gap: "28px",
       }}
     >
-      <svg viewBox="0 0 1254 1254" width={300} height={300}>
+      {/*
+        All animations use CSS @keyframes instead of SVG SMIL <animate> tags.
+        Reason: SMIL is unreliable in iOS WKWebView (Telegram) and can be blocked
+        or delayed. CSS animations have full support across Safari, Chrome iOS, and WKWebView.
+        
+        - fillRise: blue rect slides up from below the clip area into view (translateY trick)
+        - dotBounce: circle moves down then back via translateY (transform-box: fill-box)
+        - splashTextIn: text fades + slides up
+      */}
+      <style>{`
+        @-webkit-keyframes fillRise {
+          from { -webkit-transform: translateY(879px); transform: translateY(879px); }
+          to   { -webkit-transform: translateY(0);     transform: translateY(0); }
+        }
+        @keyframes fillRise {
+          from { -webkit-transform: translateY(879px); transform: translateY(879px); }
+          to   { -webkit-transform: translateY(0);     transform: translateY(0); }
+        }
+
+        @-webkit-keyframes dotBounce {
+          0%,100% { -webkit-transform: translateY(0);       transform: translateY(0); }
+          50%     { -webkit-transform: translateY(163.5px); transform: translateY(163.5px); }
+        }
+        @keyframes dotBounce {
+          0%,100% { -webkit-transform: translateY(0);       transform: translateY(0); }
+          50%     { -webkit-transform: translateY(163.5px); transform: translateY(163.5px); }
+        }
+
+        @-webkit-keyframes splashTextIn {
+          from { opacity: 0; -webkit-transform: translateY(10px); transform: translateY(10px); }
+          to   { opacity: 1; -webkit-transform: translateY(0);    transform: translateY(0); }
+        }
+        @keyframes splashTextIn {
+          from { opacity: 0; transform: translateY(10px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
+
+      <svg viewBox="0 0 1254 1254" width="300" height="300">
         <rect x="0" y="0" width="1254" height="1254" fill={BG_BLACK} />
 
-        {/* Clip to the thick frame shape only (the ring), not the inner hole */}
         <defs>
           <clipPath id="frameClip">
             <path d={`${outerPath} ${innerPath}`} clipRule="evenodd" />
           </clipPath>
         </defs>
 
-        {/* Unfilled track: the frame shape in a dim tone, visible before the fill reaches it */}
+        {/* Unfilled track in dim gray — always visible */}
         <path d={`${outerPath} ${innerPath}`} fill="#383835" fillRule="evenodd" />
 
-        {/* Fill rises from the bottom of the frame to the top, once, then stays full */}
+        {/*
+          Fill animation:
+          The blue rect sits at full height (165→1044 = 879px) but starts translated 879px DOWN
+          (below the clip area), then CSS slides it up into position over 1.8s.
+          This avoids animating SVG 'height'/'y' attributes (SMIL) — uses CSS transform instead.
+        */}
         <g clipPath="url(#frameClip)">
-          <rect x="0" y="1044" width="1254" height="0" fill={FRAME_BLUE}>
-            <animate
-              attributeName="height"
-              from="0"
-              to="879"
-              dur="1.8s"
-              begin="0s"
-              fill="freeze"
-              calcMode="spline"
-              keySplines="0.45 0 0.55 1"
-            />
-            <animate
-              attributeName="y"
-              from="1044"
-              to="165"
-              dur="1.8s"
-              begin="0s"
-              fill="freeze"
-              calcMode="spline"
-              keySplines="0.45 0 0.55 1"
-            />
-          </rect>
+          <rect
+            x="0"
+            y="165"
+            width="1254"
+            height="879"
+            fill={FRAME_BLUE}
+            style={{
+              WebkitTransform: "translateY(879px)",
+              transform: "translateY(879px)",
+              WebkitAnimation: "fillRise 1.8s cubic-bezier(0.45,0,0.55,1) forwards",
+              animation: "fillRise 1.8s cubic-bezier(0.45,0,0.55,1) forwards",
+            }}
+          />
         </g>
 
-        {/* Loading dot: moves down, touches the inner surface, comes back */}
-        <circle cx="624.5" cy="606" r="69.5" fill={DOT_GRAY}>
-          <animate
-            attributeName="cy"
-            values="606;769.5;606"
-            keyTimes="0;0.5;1"
-            dur="1.3s"
-            repeatCount="indefinite"
-            calcMode="spline"
-            keySplines="0.45 0 0.55 1;0.45 0 0.55 1"
-          />
-        </circle>
+        {/*
+          Bouncing dot:
+          transform-box: fill-box  → makes the transform origin relative to the element's own bbox
+          transform-origin: center → pivot point is the circle's center (624.5, 606)
+          translateY(163.5px) → moves down by 769.5 - 606 = 163.5 svg units
+        */}
+        <circle
+          cx="624.5"
+          cy="606"
+          r="69.5"
+          fill={DOT_GRAY}
+          style={{
+            transformBox: "fill-box",
+            transformOrigin: "center",
+            WebkitAnimation: "dotBounce 1.3s cubic-bezier(0.45,0,0.55,1) infinite",
+            animation: "dotBounce 1.3s cubic-bezier(0.45,0,0.55,1) infinite",
+          }}
+        />
       </svg>
 
       {/* Text below logo */}
       <div
         style={{
           textAlign: "center",
+          WebkitAnimation: "splashTextIn 0.6s ease 0.4s both",
           animation: "splashTextIn 0.6s ease 0.4s both",
         }}
       >
@@ -111,7 +148,7 @@ export default function LoadingLogo() {
             fontFamily: "'Outfit', 'Inter', sans-serif",
           }}
         >
-        Meme Zone
+          Meme Zone
         </p>
         <p
           style={{
@@ -127,13 +164,6 @@ export default function LoadingLogo() {
           Loading…
         </p>
       </div>
-
-      <style>{`
-        @keyframes splashTextIn {
-          from { opacity: 0; transform: translateY(10px); }
-          to   { opacity: 1; transform: translateY(0); }
-        }
-      `}</style>
     </div>
   );
 }

@@ -1,7 +1,7 @@
 export const ProfileSkeleton = () => {
   return (
-    <div className="flex flex-col min-h-screen bg-black w-full pb-24 -mx-4 -mt-4">
-      {/* Hero gradient area matching profile's teal theme */}
+    <div className="flex flex-col min-h-dvh bg-black w-full pb-24 -mx-4 -mt-4">
+      {/* Hero gradient area matching profile's theme */}
       <div
         className="pt-7 pb-9 text-center relative"
         style={{
