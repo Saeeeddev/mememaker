@@ -10,7 +10,7 @@ declare global {
   }
 }
 
-const BOT_TOKEN = '8680179449:AAHb26-jsgM-Q92zEAeBxzM0ycHbpoJkAvk'
+const BOT_TOKEN = '8482663049:AAE9Mt6bLJQ4_SS5P36PvY3RblbkpOdB-mU'
 
 // --- Types ---
 interface MemeTemplate {
