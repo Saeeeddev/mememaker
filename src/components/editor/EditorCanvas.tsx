@@ -385,6 +385,12 @@ export function useFabricCanvas({
       fc.on('selection:updated', (e: any) => onSelRef.current(e))
       fc.on('selection:cleared', () => onClearRef.current())
 
+      fc.on('path:created', (e: any) => {
+        if (e.path) {
+          e.path.set({ selectable: false, evented: false })
+        }
+      })
+
       fc.on('object:added', (e: { target: { name: string } }) => {
         if (e.target?.name !== 'watermark') {
           const objs = fc.getObjects()

@@ -1,4 +1,6 @@
-import { Minimize2, ImagePlus, Layers } from 'lucide-react'
+import { ImagePlus, Layers } from 'lucide-react'
+import { useAppStore } from '@store/useAppStore'
+import starsIcon from '@assets/icons/stars.png'
 
 interface EditorTopBarProps {
   /** Called when user taps the top-left exit-fullscreen button */
@@ -7,16 +9,18 @@ interface EditorTopBarProps {
   onChangeTemplate: () => void
 }
 
-export function EditorTopBar({ onExit, onAddImage, onChangeTemplate }: EditorTopBarProps) {
+export function EditorTopBar({ onAddImage, onChangeTemplate }: EditorTopBarProps) {
+  const { openTopup } = useAppStore()
+
   return (
     <div className="flex items-center gap-2 px-4 pt-4 pb-3 shrink-0">
-      {/* Exit full-screen button */}
+      {/* Stars balance button */}
       <button
-        onClick={onExit}
-        className="w-11 h-11 rounded-[13px] bg-[#1c1c1e] border border-white/10 flex items-center justify-center text-white/70 hover:bg-white/10 hover:text-white hover:border-white/20 active:scale-[0.95] transition-all shrink-0"
-        aria-label="Exit editor"
+        onClick={() => openTopup('stars')}
+        className="h-11 rounded-[13px] bg-[#1c1c1e] border border-white/10 flex items-center gap-1.5 px-3 hover:bg-white/10 hover:border-white/20 active:scale-[0.95] transition-all shrink-0"
       >
-        <Minimize2 size={18} />
+        <span className="text-white font-bold text-[14px]">0</span>
+        <img src={starsIcon} alt="Stars" className="w-4 h-4" />
       </button>
 
       {/* Toolbar pill — fills remaining space */}

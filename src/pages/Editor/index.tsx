@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Search, Upload, Check } from 'lucide-react'
-import { useAppStore } from '@store/useAppStore'
 import {
   EditorTopBar,
   EditorCanvas,
@@ -14,7 +13,6 @@ import {
   type TextEditState,
   type SelectableObj,
 } from '@components/editor'
-import starsIcon from '@assets/icons/stars.png'
 
 /* ─── Fabric loaded via CDN in index.html ─── */
 declare global {
@@ -37,8 +35,6 @@ const DEFAULT_DRAW: DrawSettings = { color: '#ef4444', width: 6, opacity: 1 }
 // Editor Page
 // ─────────────────────────────────────
 export function Editor() {
-  const { openTopup } = useAppStore()
-
   // "pick" shows template picker overlay, "edit" shows full-screen editor
   const [step, setStep] = useState<'pick' | 'edit'>('edit')
   const [selectedSrc, setSelectedSrc] = useState<string | null>(null)
@@ -51,8 +47,8 @@ export function Editor() {
   const [memesLoading, setMemesLoading] = useState(false)
   const [pickerSelectedSrc, setPickerSelectedSrc] = useState<string | null>(null)
 
-  // ── Canvas / editor state ──
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
   const fabricRef = useRef<unknown>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const addImageInputRef = useRef<HTMLInputElement>(null)
@@ -68,6 +64,19 @@ export function Editor() {
     textColor: '#ffffff',
     strokeColor: '#000000',
   })
+
+  // ── Disable screen capture if possible ──
+  useEffect(() => {
+    const tg = (window as any).Telegram?.WebApp
+    if (tg?.disableScreenCapture) {
+      tg.disableScreenCapture()
+    }
+    return () => {
+      if (tg?.enableScreenCapture) {
+        tg.enableScreenCapture()
+      }
+    }
+  }, [])
 
   // ── Fetch meme templates (lazy — only when picker is opened) ──
   function loadMemes() {
@@ -121,6 +130,7 @@ export function Editor() {
     canvasKey,
     selectedSrc,
     canvasRef,
+    containerRef,
     fabricRef,
     onSelectionCreated: onSel,
     onSelectionCleared: () => {
@@ -300,7 +310,7 @@ export function Editor() {
   // Matches the profile page dark aesthetic: bg-black, rounded panels, etc.
   // ─────────────────────────────────────────────────────────────────────────
   return (
-    <div className="flex flex-col bg-black -mx-4 -mt-4 relative" style={{ height: 'calc(100dvh - 80px)' }}>
+    <div className="flex flex-col bg-black -mx-4 -mt-4 relative select-none [&_*]:select-none" style={{ height: 'calc(100dvh - 80px)', WebkitTouchCallout: 'none' }}>
       {/* Hidden file inputs */}
       <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileUpload} />
       <input ref={addImageInputRef} type="file" accept="image/*" className="hidden" onChange={handleAddImageUpload} />
@@ -364,6 +374,7 @@ export function Editor() {
           <EditorCanvas
             canvasKey={canvasKey}
             canvasRef={canvasRef}
+            containerRef={containerRef}
             isDrawingMode={isDrawingMode}
             drawSettings={drawSettings}
             onToggleDraw={toggleDraw}
@@ -371,13 +382,34 @@ export function Editor() {
             onRotate={() => {
               const fc = fabricRef.current as any
               if (!fc) return
-              const active = fc.getActiveObject()
-              if (active) {
-                active.set('angle', ((active.angle ?? 0) + 15) % 360)
+              const bg = fc.backgroundImage
+              if (bg) {
+                if (bg.originX !== 'center' || bg.originY !== 'center') {
+                  bg.originX = 'center'
+                  bg.originY = 'center'
+                  bg.left = fc.width / 2
+                  bg.top = fc.height / 2
+                }
+                bg.angle = ((bg.angle || 0) + 90) % 360
                 fc.renderAll()
               }
             }}
-            onCrop={() => {}}
+            onCrop={() => {
+              const fc = fabricRef.current as any
+              if (!fc) return
+              const bg = fc.backgroundImage
+              if (bg) {
+                if (bg.originX !== 'center' || bg.originY !== 'center') {
+                  bg.originX = 'center'
+                  bg.originY = 'center'
+                  bg.left = fc.width / 2
+                  bg.top = fc.height / 2
+                }
+                bg.scaleX *= 1.1
+                bg.scaleY *= 1.1
+                fc.renderAll()
+              }
+            }}
           />
 
           {/* ── Bottom actions ── */}
@@ -428,15 +460,6 @@ export function Editor() {
                 <h1 className="text-white font-bold text-[22px] mb-1">Meme Zone 🎭</h1>
                 <p className="text-white/40 text-[13px]">Pick a template or upload your own</p>
               </div>
-
-              {/* Stars balance pill — top right */}
-              <button
-                onClick={() => openTopup('stars')}
-                className="absolute top-5 right-4 flex items-center gap-1.5 bg-[#1c1c1e] border border-white/10 rounded-full px-3 py-1.5"
-              >
-                <span className="text-white font-bold text-[13px]">0</span>
-                <img src={starsIcon} alt="Stars" className="w-4 h-4" />
-              </button>
 
               {/* Upload button */}
               <div className="relative z-10 px-4 mt-5">

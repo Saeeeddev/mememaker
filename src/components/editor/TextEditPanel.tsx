@@ -1,3 +1,4 @@
+import { createPortal } from 'react-dom'
 import { Check } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { FONTS, type TextEditState } from './types'
@@ -10,7 +11,7 @@ interface TextEditPanelProps {
 }
 
 export function TextEditPanel({ open, textEdit, onApply, onClose }: TextEditPanelProps) {
-  return (
+  return createPortal(
     <AnimatePresence>
       {open && (
         <>
@@ -120,6 +121,7 @@ export function TextEditPanel({ open, textEdit, onApply, onClose }: TextEditPane
           </motion.div>
         </>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   )
 }

@@ -72,7 +72,7 @@ export function EditorBottomActions({
       <div className="flex gap-2.5">
         <button
           onClick={onSendToBot}
-          className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-[14px] bg-[#229ED9] text-white font-bold text-[14px] shadow-[0_4px_20px_rgba(34,158,217,0.4)] active:scale-[0.98] transition-transform"
+          className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-[14px] bg-[#10b981] text-white font-bold text-[14px] shadow-[0_4px_20px_rgba(16,185,129,0.4)] active:scale-[0.98] transition-transform"
         >
           <Send size={16} />
           Send to Bot
