@@ -476,7 +476,7 @@ export function useFabricCanvas({
             ...customControls.tl,
             render: renderIcon(deleteImg),
             actionHandler: () => false,
-            mouseUpHandler: (eventData: any, transform: any) => {
+            mouseUpHandler: (_eventData: any, transform: any) => {
               const target = transform.target
               const canvas = target.canvas
               canvas.remove(target)

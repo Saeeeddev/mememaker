@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import { Gift, Zap, Sparkles, Play } from 'lucide-react'
+import { Sparkles, Play } from 'lucide-react'
 import logoMemeZone from '@assets/Logo/LogoMemeZone.webp'
 import banner1 from '@assets/images/Banners/banner1 (1).webp'
 import banner2 from '@assets/images/Banners/baner2.webp'
