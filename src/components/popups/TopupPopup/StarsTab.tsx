@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import starsIcon from '@assets/icons/stars.png'
 
 export const StarsTab = () => {
   const [amount, setAmount] = useState('0')
@@ -22,7 +23,7 @@ export const StarsTab = () => {
     <div className="flex flex-col items-center px-4 pb-8 w-full">
       {/* Stars Pill */}
       <div className="bg-[#191b1b] rounded-[18px] px-9 py-5 flex items-center gap-3 mb-8 shadow-[0_0_24px_rgba(34,158,217,0.18)] border border-[#229ED9]/20">
-        <span className="text-[#c9902b] drop-shadow-[0_0_9px_rgba(255,170,30,0.55)]">⭐</span>
+        <img src={starsIcon} alt="Stars" className="w-6 h-6 drop-shadow-[0_0_9px_rgba(255,170,30,0.55)]" />
         <span className="text-white font-extrabold">Stars</span>
       </div>
 
@@ -55,7 +56,7 @@ export const StarsTab = () => {
             className="bg-[#111] hover:bg-[#181818] transition-colors rounded-[18px] py-3.5 flex items-center justify-center gap-2 border border-white/7 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"
           >
             <span className="text-white font-extrabold text-[16px]">{preset}</span>
-            <span className="text-[#9b742b] text-[13px]">⭐</span>
+            <img src={starsIcon} alt="Stars" className="w-4 h-4" />
           </button>
         ))}
       </div>
@@ -69,7 +70,7 @@ export const StarsTab = () => {
           hover:bg-[#2AABEE] active:scale-[0.98]
           disabled:opacity-35 disabled:cursor-not-allowed disabled:shadow-none"
       >
-        Top Up ⭐ {parseInt(amount) > 0 ? parseInt(amount).toLocaleString() : ''} Stars
+        <span className="flex items-center justify-center gap-1.5">Top Up <img src={starsIcon} alt="Stars" className="w-4 h-4" /> {parseInt(amount) > 0 ? parseInt(amount).toLocaleString() : ''} Stars</span>
       </button>
     </div>
   )

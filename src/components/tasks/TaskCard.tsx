@@ -1,5 +1,5 @@
 import type { Task } from '@/types/task'
-import gramDiamondMark from '@assets/icons/GramDiamondMark.png'
+import starsIcon from '@assets/icons/stars.png'
 
 interface TaskCardProps {
   task: Task
@@ -32,8 +32,8 @@ export function TaskCard({ task, onAction }: TaskCardProps) {
         <p className="text-[#7f8790] text-[12.5px] leading-[15px] truncate mt-0.5">{task.description}</p>
         <div className="mt-0.5 flex items-center gap-1 text-xs">
           <span className="text-[#00f0b5] font-extrabold">+{task.reward} {task.rewardType.toUpperCase()}</span>
-          {task.rewardType === 'ton' && (
-            <img src={gramDiamondMark} alt="" className="h-3 w-3 object-contain" />
+          {task.rewardType === 'stars' && (
+            <img src={starsIcon} alt="Stars" className="h-3 w-3 object-contain" />
           )}
         </div>
       </div>

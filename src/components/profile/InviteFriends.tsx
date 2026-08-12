@@ -2,15 +2,25 @@ import { useState } from 'react'
 import { ChevronRight, ChevronDown, Copy, Users } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 
-export const InviteFriends = () => {
+interface InviteFriendsProps {
+  onExpand?: (expanded: boolean) => void
+}
+
+export const InviteFriends = ({ onExpand }: InviteFriendsProps = {}) => {
   const [expanded, setExpanded] = useState(false)
+
+  const handleToggle = () => {
+    const next = !expanded
+    setExpanded(next)
+    onExpand?.(next)
+  }
 
   return (
     <div className="mt-4 bg-[#141416] rounded-[18px] p-4">
       {/* Header (always visible) */}
       <div 
         className={`flex items-center justify-between cursor-pointer transition-colors ${expanded ? 'mb-3.5' : ''}`}
-        onClick={() => setExpanded(!expanded)}
+        onClick={handleToggle}
       >
         <div className="flex items-center gap-2.5">
           <span className="text-xl">💸</span>

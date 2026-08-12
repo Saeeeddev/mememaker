@@ -1,15 +1,22 @@
+import { useState } from 'react'
 import { useAppStore } from '@store/useAppStore'
 import { ProfileHeader } from '@components/profile/ProfileHeader'
 import { MyMemes } from '@components/profile/MyMemes'
 import { InviteFriends } from '@components/profile/InviteFriends'
 import GradientWaves from '@components/profile/GradientWaves'
 import LiquidGlass from 'liquid-glass-react'
+import starsIcon from '@assets/icons/stars.png'
 
 const Profile = () => {
   const { openTopup } = useAppStore()
+  const [isInviteExpanded, setIsInviteExpanded] = useState(false)
 
   return (
-    <div className="flex flex-col min-h-dvh overflow-hidden bg-black relative -mx-4 -mt-4 -mb-[calc(7rem+env(safe-area-inset-bottom))]">
+    <div className={`flex flex-col min-h-dvh bg-black relative -mx-4 -mt-4 ${
+      isInviteExpanded 
+        ? "overflow-y-auto pb-[calc(7rem+env(safe-area-inset-bottom))]" 
+        : "overflow-hidden -mb-[calc(7rem+env(safe-area-inset-bottom))]"
+    }`}>
       {/* Hero balance panel */}
       <div className="relative overflow-hidden pt-7 pb-9 text-center bg-[#202B36]">
         <div className="absolute inset-0">
@@ -41,15 +48,7 @@ const Profile = () => {
           <div className="text-[#a9c2c8] text-sm mb-1.5">Meme Zone Balance</div>
           <div className="flex items-center justify-center gap-2 text-[42px] font-bold leading-none text-white">
             0
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="#F5A623" className="mb-0.5">
-              <path d="M12 2.5l2.9 6.3 6.9.7-5.2 4.7 1.5 6.8L12 17.6 5.9 21l1.5-6.8-5.2-4.7 6.9-.7L12 2.5z" />
-            </svg>
-          </div>
-          <div className="mt-2.5 flex items-center justify-center gap-1.5 text-lg font-semibold text-[#F5A623]">
-            0
-            <svg width="19" height="19" viewBox="0 0 24 24" fill="#F5A623">
-              <path d="M12 2.5l2.9 6.3 6.9.7-5.2 4.7 1.5 6.8L12 17.6 5.9 21l1.5-6.8-5.2-4.7 6.9-.7L12 2.5z" />
-            </svg>
+            <img src={starsIcon} alt="Stars" className="w-8 h-8 mb-0.5" />
           </div>
 
           {/* Action pills */}
@@ -72,9 +71,7 @@ const Profile = () => {
                   <div className="h-12 w-32 rounded-full bg-white/12 border border-white/8 hover:bg-white/20 transition-colors" />
                 </LiquidGlass>
                 <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="#F5A623">
-                    <path d="M12 2.5l2.9 6.3 6.9.7-5.2 4.7 1.5 6.8L12 17.6 5.9 21l1.5-6.8-5.2-4.7 6.9-.7L12 2.5z" />
-                  </svg>
+                  <img src={starsIcon} alt="Stars" className="w-5 h-5 drop-shadow-md" />
                 </div>
               </div>
               <span className="text-[12.5px] text-[#dfe6e8]">Top up Stars</span>
@@ -92,7 +89,7 @@ const Profile = () => {
         <MyMemes />
 
         {/* Invite Friends */}
-        <InviteFriends />
+        <InviteFriends onExpand={setIsInviteExpanded} />
       </div>
     </div>
   )

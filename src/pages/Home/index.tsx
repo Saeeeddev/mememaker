@@ -2,9 +2,24 @@ import { useNavigate } from 'react-router-dom'
 import { Gift, Zap, Sparkles, Play } from 'lucide-react'
 import logoMemeZone from '@assets/Logo/LogoMemeZone.webp'
 import { GridScan } from '@components/home/GridScan'
+import { useState, useEffect } from 'react'
 
 export function Home() {
   const navigate = useNavigate()
+  const [currentBanner, setCurrentBanner] = useState(0)
+  
+  const banners = [
+    { title: "Create Viral Memes", desc: "Start designing now!", icon: <Play className="text-blue-400 w-6 h-6" />, bg: "bg-blue-500/20" },
+    { title: "Special Offer", desc: "Get 50% off on premium", icon: <Gift className="text-emerald-400 w-6 h-6" />, bg: "bg-emerald-500/20" },
+    { title: "Daily Challenges", desc: "Participate and win stars", icon: <Zap className="text-amber-400 w-6 h-6" />, bg: "bg-amber-500/20" }
+  ]
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentBanner((prev) => (prev + 1) % banners.length)
+    }, 3000)
+    return () => clearInterval(timer)
+  }, [])
 
   return (
     <div className="space-y-6 pt-2 bg-[#000000]">
@@ -50,24 +65,18 @@ export function Home() {
 
         </div>
       </div>
-      {/* Two banners side-by-side */}
-      <div className="flex gap-3 px-2">
-        <div className="flex-1 bg-[#141416] border border-white/10 rounded-3xl p-4 relative overflow-hidden h-32 flex flex-col justify-between">
-          <Zap className="text-amber-400 w-6 h-6" />
+      {/* Moving Banner */}
+      <div className="px-2">
+        <div 
+          onClick={() => navigate('/editor')}
+          className="w-full bg-[#141416] border border-white/10 rounded-3xl p-4 relative overflow-hidden h-32 flex flex-col justify-between cursor-pointer transition-opacity duration-500"
+        >
+          {banners[currentBanner].icon}
           <div>
-            <h3 className="font-bold text-sm text-amber-100">Daily Rewards</h3>
-            <p className="text-[10px] text-amber-100/60 mt-0.5">Claim now</p>
+            <h3 className="font-bold text-sm text-white">{banners[currentBanner].title}</h3>
+            <p className="text-[10px] text-white/60 mt-0.5">{banners[currentBanner].desc}</p>
           </div>
-          <div className="absolute -bottom-4 -right-4 w-20 h-20 bg-amber-500/20 rounded-full blur-xl" />
-        </div>
-        
-        <div className="flex-1 bg-[#141416] border border-white/10 rounded-3xl p-4 relative overflow-hidden h-32 flex flex-col justify-between">
-          <Gift className="text-emerald-400 w-6 h-6" />
-          <div>
-            <h3 className="font-bold text-sm text-emerald-100">Free Meme</h3>
-            <p className="text-[10px] text-emerald-100/60 mt-0.5">Start creating</p>
-          </div>
-          <div className="absolute -bottom-4 -right-4 w-20 h-20 bg-emerald-500/20 rounded-full blur-xl" />
+          <div className={`absolute -bottom-4 -right-4 w-20 h-20 rounded-full blur-xl ${banners[currentBanner].bg}`} />
         </div>
       </div>
 

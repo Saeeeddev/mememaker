@@ -1,0 +1,411 @@
+import { useRef, useEffect, useState } from 'react'
+import { RotateCw, Crop, Pencil, X, Minus, Plus } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+
+/* Fabric loaded via CDN in index.html */
+declare global {
+  interface Window {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    fabric: any
+  }
+}
+
+export interface SelectableObj {
+  type: string
+  text?: string
+  fontFamily?: string
+  fontSize?: number
+  fill?: string
+  stroke?: string
+}
+
+export interface DrawSettings {
+  color: string
+  width: number
+  opacity: number
+}
+
+interface EditorCanvasProps {
+  canvasKey: number
+  canvasRef: React.RefObject<HTMLCanvasElement | null>
+  containerRef: React.RefObject<HTMLDivElement | null>
+  isDrawingMode: boolean
+  drawSettings: DrawSettings
+  onToggleDraw: () => void
+  onUpdateDrawSettings: (patch: Partial<DrawSettings>) => void
+  onRotate?: () => void
+  onCrop?: () => void
+}
+
+/** Converts Hex / RGB + opacity into RGBA string for Fabric freeDrawingBrush */
+export function colorToRgba(color: string, opacity: number): string {
+  if (!color) return `rgba(239, 68, 68, ${opacity})`
+  if (color.startsWith('rgba')) {
+    return color.replace(/rgba?\(([^)]+)\)/, (_, p1) => {
+      const parts = p1.split(',').map((s: string) => s.trim())
+      return `rgba(${parts[0]}, ${parts[1]}, ${parts[2]}, ${opacity})`
+    })
+  }
+  if (color.startsWith('rgb')) {
+    const matches = color.match(/\d+/g)
+    if (matches && matches.length >= 3) {
+      return `rgba(${matches[0]}, ${matches[1]}, ${matches[2]}, ${opacity})`
+    }
+  }
+  let hex = color.replace('#', '')
+  if (hex.length === 3) {
+    hex = hex.split('').map(c => c + c).join('')
+  }
+  if (hex.length === 6) {
+    const r = parseInt(hex.substring(0, 2), 16)
+    const g = parseInt(hex.substring(2, 4), 16)
+    const b = parseInt(hex.substring(4, 6), 16)
+    return `rgba(${r}, ${g}, ${b}, ${opacity})`
+  }
+  return color
+}
+
+const DRAW_COLORS = [
+  '#ffffff', '#000000', '#ef4444', '#f97316',
+  '#eab308', '#22c55e', '#3b82f6', '#a855f7',
+  '#ec4899', '#06b6d4',
+]
+
+export function EditorCanvas({
+  canvasKey,
+  canvasRef,
+  containerRef,
+  isDrawingMode,
+  drawSettings,
+  onToggleDraw,
+  onUpdateDrawSettings,
+  onRotate,
+  onCrop,
+}: EditorCanvasProps) {
+  const [showDrawSettings, setShowDrawSettings] = useState(false)
+
+  // When draw mode toggles, also open settings if turning on
+  const handleToggleDraw = () => {
+    onToggleDraw()
+    if (!isDrawingMode) {
+      setShowDrawSettings(true)
+    }
+  }
+
+  return (
+    <div className="flex-1 flex gap-2 px-4 py-2 min-h-0 min-w-0 relative overflow-hidden">
+      {/* Main canvas holder container — measures actual available width & height */}
+      <div
+        ref={containerRef}
+        key={canvasKey}
+        className="flex-1 rounded-[18px] overflow-hidden border border-white/10 bg-[#0e0e10] flex items-center justify-center relative min-h-0 min-w-0 shadow-inner"
+      >
+        <canvas ref={canvasRef} className="block shadow-2xl rounded-sm" />
+
+        {/* Floating Draw Settings popover panel */}
+        <AnimatePresence>
+          {showDrawSettings && isDrawingMode && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.92, y: -10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.92, y: -10 }}
+              transition={{ duration: 0.18 }}
+              className="absolute top-3 left-3 z-50 bg-[#15161a]/95 backdrop-blur-xl border border-white/15 rounded-[22px] p-4 w-64 shadow-[0_16px_40px_rgba(0,0,0,0.6)]"
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between mb-3 pb-2 border-b border-white/10">
+                <div className="flex items-center gap-2">
+                  <Pencil size={15} className="text-[#229ED9]" />
+                  <span className="text-white font-bold text-[13px]">Brush Settings</span>
+                </div>
+                <button
+                  onClick={() => setShowDrawSettings(false)}
+                  className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-white/60 hover:bg-white/20 transition-colors"
+                >
+                  <X size={12} />
+                </button>
+              </div>
+
+              {/* Color swatches */}
+              <div className="mb-3.5">
+                <span className="text-white/50 text-[11px] font-semibold mb-2 block">Brush Color</span>
+                <div className="grid grid-cols-5 gap-1.5 mb-2">
+                  {DRAW_COLORS.map(c => (
+                    <button
+                      key={c}
+                      onClick={() => onUpdateDrawSettings({ color: c })}
+                      className={`w-7 h-7 rounded-full border-2 transition-all active:scale-90 ${
+                        drawSettings.color === c
+                          ? 'border-white scale-110 shadow-lg'
+                          : 'border-transparent hover:border-white/40'
+                      }`}
+                      style={{ backgroundColor: c }}
+                    />
+                  ))}
+                </div>
+                {/* Custom color input */}
+                <div className="flex items-center justify-between bg-white/5 rounded-[10px] px-2.5 py-1.5 border border-white/8">
+                  <span className="text-white/60 text-[11px] font-semibold">Custom Color</span>
+                  <div
+                    className="w-6 h-6 rounded-full border-2 border-white/20 relative overflow-hidden"
+                    style={{ backgroundColor: drawSettings.color }}
+                  >
+                    <input
+                      type="color"
+                      value={drawSettings.color}
+                      onChange={e => onUpdateDrawSettings({ color: e.target.value })}
+                      className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Brush width / size */}
+              <div className="mb-3.5">
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-white/50 text-[11px] font-semibold">Brush Size</span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-white text-[11px] font-bold">{drawSettings.width}px</span>
+                    {/* Live thickness preview circle */}
+                    <div
+                      className="rounded-full bg-white transition-all border border-black/30"
+                      style={{
+                        width: Math.min(18, Math.max(4, drawSettings.width / 2)),
+                        height: Math.min(18, Math.max(4, drawSettings.width / 2)),
+                        backgroundColor: drawSettings.color,
+                        opacity: drawSettings.opacity,
+                      }}
+                    />
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => onUpdateDrawSettings({ width: Math.max(1, drawSettings.width - 2) })}
+                    className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-white/60 hover:bg-white/20 transition-colors shrink-0"
+                  >
+                    <Minus size={10} />
+                  </button>
+                  <input
+                    type="range"
+                    min={1}
+                    max={50}
+                    value={drawSettings.width}
+                    onChange={e => onUpdateDrawSettings({ width: parseInt(e.target.value) })}
+                    className="flex-1 accent-[#229ED9]"
+                  />
+                  <button
+                    onClick={() => onUpdateDrawSettings({ width: Math.min(50, drawSettings.width + 2) })}
+                    className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-white/60 hover:bg-white/20 transition-colors shrink-0"
+                  >
+                    <Plus size={10} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Opacity */}
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-white/50 text-[11px] font-semibold">Opacity</span>
+                  <span className="text-white text-[11px] font-bold">{Math.round(drawSettings.opacity * 100)}%</span>
+                </div>
+                <input
+                  type="range"
+                  min={10}
+                  max={100}
+                  value={Math.round(drawSettings.opacity * 100)}
+                  onChange={e => onUpdateDrawSettings({ opacity: parseInt(e.target.value) / 100 })}
+                  className="w-full accent-[#229ED9]"
+                />
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      {/* Vertical side toolbar */}
+      <div className="flex flex-col gap-2 w-12 shrink-0">
+        {/* Draw button */}
+        <button
+          onClick={handleToggleDraw}
+          title="Draw"
+          className={`relative w-12 h-12 rounded-[14px] flex flex-col items-center justify-center gap-0.5 transition-all active:scale-[0.95] border ${
+            isDrawingMode
+              ? 'bg-[#229ED9]/25 border-[#229ED9]/60 text-[#229ED9] shadow-[0_0_12px_rgba(34,158,217,0.3)]'
+              : 'bg-[#1c1c1e] border-white/10 text-white/60 hover:bg-[#252528] hover:text-white/90 hover:border-white/20'
+          }`}
+        >
+          <Pencil size={17} />
+          <span className={`text-[8px] font-semibold tracking-wide ${isDrawingMode ? 'text-[#229ED9]' : 'text-white/40'}`}>Draw</span>
+          {isDrawingMode && (
+            <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-[#229ED9] shadow-[0_0_6px_#229ED9]" />
+          )}
+        </button>
+
+        {/* Rotate button */}
+        <button
+          onClick={onRotate}
+          title="Rotate"
+          className="w-12 h-12 rounded-[14px] bg-[#1c1c1e] border border-white/10 flex flex-col items-center justify-center gap-0.5 text-white/60 hover:bg-[#252528] hover:text-white/90 hover:border-white/20 active:scale-[0.95] transition-all"
+        >
+          <RotateCw size={17} />
+          <span className="text-[8px] font-semibold tracking-wide text-white/40">Rotate</span>
+        </button>
+
+        {/* Crop button */}
+        <button
+          onClick={onCrop}
+          title="Crop"
+          className="w-12 h-12 rounded-[14px] bg-[#1c1c1e] border border-white/10 flex flex-col items-center justify-center gap-0.5 text-white/60 hover:bg-[#252528] hover:text-white/90 hover:border-white/20 active:scale-[0.95] transition-all"
+        >
+          <Crop size={17} />
+          <span className="text-[8px] font-semibold tracking-wide text-white/40">Crop</span>
+        </button>
+      </div>
+    </div>
+  )
+}
+
+/* ──────────────────────────────────────────────────────────
+   Fabric initialisation hook — robust canvas sizing
+────────────────────────────────────────────────────────── */
+export function useFabricCanvas({
+  step,
+  canvasKey,
+  selectedSrc,
+  canvasRef,
+  containerRef,
+  fabricRef,
+  drawSettings,
+  onSelectionCreated,
+  onSelectionCleared,
+}: {
+  step: string
+  canvasKey: number
+  selectedSrc: string | null
+  canvasRef: React.RefObject<HTMLCanvasElement | null>
+  containerRef: React.RefObject<HTMLDivElement | null>
+  fabricRef: React.MutableRefObject<unknown>
+  drawSettings?: DrawSettings
+  onSelectionCreated: (e: { selected: SelectableObj[] }) => void
+  onSelectionCleared: () => void
+}) {
+  const onSelRef = useRef(onSelectionCreated)
+  onSelRef.current = onSelectionCreated
+  const onClearRef = useRef(onSelectionCleared)
+  onClearRef.current = onSelectionCleared
+
+  useEffect(() => {
+    if (step !== 'edit' || !selectedSrc) return
+
+    let animationFrameId: number
+
+    const initCanvas = () => {
+      if (!canvasRef.current || !containerRef.current || !window.fabric) return
+      const fabric = window.fabric
+      const container = containerRef.current
+
+      // Dispose existing fabric instance if present
+      if (fabricRef.current) {
+        try { (fabricRef.current as any).dispose() } catch (_) {}
+        fabricRef.current = null
+      }
+
+      // Measure exact container inner dimensions
+      const containerWidth = container.clientWidth
+      const containerHeight = container.clientHeight
+
+      if (containerWidth <= 0 || containerHeight <= 0) {
+        animationFrameId = requestAnimationFrame(initCanvas)
+        return
+      }
+
+      const fc = new fabric.Canvas(canvasRef.current, {
+        selection: true,
+        preserveObjectStacking: true,
+      })
+      fabricRef.current = fc
+
+      // Apply initial brush color & width if drawing brush exists
+      if (fc.freeDrawingBrush && drawSettings) {
+        fc.freeDrawingBrush.color = colorToRgba(drawSettings.color, drawSettings.opacity)
+        fc.freeDrawingBrush.width = drawSettings.width
+      }
+
+      fabric.Image.fromURL(
+        selectedSrc,
+        (img: { width: number; height: number }) => {
+          if (!img || !img.width || !img.height) return
+
+          // Fill container while maintaining aspect ratio, leaving slight padding
+          const maxW = Math.max(100, containerWidth - 16)
+          const maxH = Math.max(100, containerHeight - 16)
+
+          const scale = Math.min(maxW / img.width, maxH / img.height)
+          const finalW = Math.round(img.width * scale)
+          const finalH = Math.round(img.height * scale)
+
+          fc.setDimensions({ width: finalW, height: finalH })
+
+          fc.setBackgroundImage(
+            img,
+            fc.renderAll.bind(fc),
+            {
+              scaleX: scale,
+              scaleY: scale,
+              originX: 'left',
+              originY: 'top',
+              crossOrigin: 'anonymous',
+            }
+          )
+
+          // Add watermark text to bottom-right corner
+          const wm = new fabric.Text('@creat_meme_bot', {
+            left: finalW - 10,
+            top: finalH - 10,
+            fontFamily: 'Poppins',
+            fontSize: Math.max(10, Math.round(14 * scale)),
+            fill: 'rgba(255,255,255,0.7)',
+            stroke: 'rgba(0,0,0,0.9)',
+            strokeWidth: 3,
+            paintFirst: 'stroke',
+            originX: 'right',
+            originY: 'bottom',
+            selectable: false,
+            evented: false,
+            fontWeight: 'bold',
+            name: 'watermark',
+          })
+          fc.add(wm)
+          fc.renderAll()
+        },
+        { crossOrigin: 'anonymous' }
+      )
+
+      fc.on('selection:created', (e: any) => onSelRef.current(e))
+      fc.on('selection:updated', (e: any) => onSelRef.current(e))
+      fc.on('selection:cleared', () => onClearRef.current())
+
+      fc.on('object:added', (e: { target: { name: string } }) => {
+        if (e.target?.name !== 'watermark') {
+          const objs = fc.getObjects()
+          for (const o of objs) {
+            if (o.name === 'watermark') { o.bringToFront(); break }
+          }
+        }
+      })
+    }
+
+    const timer = setTimeout(initCanvas, 40)
+
+    return () => {
+      clearTimeout(timer)
+      if (animationFrameId) cancelAnimationFrame(animationFrameId)
+      if (fabricRef.current) {
+        try { (fabricRef.current as any).dispose() } catch (_) {}
+        fabricRef.current = null
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [canvasKey, step, selectedSrc])
+}
+
