@@ -328,6 +328,67 @@ export function Editor() {
     setShowEditPanel(true)
   }
 
+  function handleRotate() {
+    const fc = fabricRef.current as any
+    const container = containerRef.current
+    if (!fc || !container) return
+    const active = fc.getActiveObject()
+    if (active && active.name !== 'cropRect' && active.name !== 'watermark') {
+      const currentAngle = (active.angle || 0)
+      active.set('angle', (currentAngle + 90) % 360)
+      active.setCoords()
+      fc.requestRenderAll()
+      saveHistory()
+      return
+    }
+
+    const bg = fc.backgroundImage
+    if (bg) {
+      const currentAngle = (bg.angle || 0)
+      const newAngle = (currentAngle + 90) % 360
+      
+      const isSideways = newAngle === 90 || newAngle === 270
+      const rawW = bg.width
+      const rawH = bg.height
+      
+      const activeW = isSideways ? rawH : rawW
+      const activeH = isSideways ? rawW : rawH
+      
+      const maxW = Math.max(100, container.clientWidth - 16)
+      const maxH = Math.max(100, container.clientHeight - 16)
+      
+      const scale = Math.min(maxW / activeW, maxH / activeH)
+      const finalW = Math.round(activeW * scale)
+      const finalH = Math.round(activeH * scale)
+      
+      const oldW = fc.width
+      
+      fc.setDimensions({ width: finalW, height: finalH })
+      
+      bg.set({
+        angle: newAngle,
+        scaleX: scale,
+        scaleY: scale,
+        originX: 'center',
+        originY: 'center',
+        left: finalW / 2,
+        top: finalH / 2
+      })
+      
+      const rescaleFactor = finalW / oldW
+      fc.getObjects().forEach((o: any) => {
+        o.left *= rescaleFactor
+        o.top *= rescaleFactor
+        o.scaleX = (o.scaleX || 1) * rescaleFactor
+        o.scaleY = (o.scaleY || 1) * rescaleFactor
+        o.setCoords()
+      })
+      
+      fc.renderAll()
+      saveHistory()
+    }
+  }
+
   function applyTextEdit(patch: Partial<TextEditState>) {
     const next = { ...textEdit, ...patch }
     setTextEdit(next)
@@ -558,10 +619,16 @@ export function Editor() {
       const src = await getResizedImageURL(file)
       fabric.Image.fromURL(src, (img: any) => {
         img.scaleToWidth(fc.width / 2)
-        img.set({ left: fc.width / 4, top: fc.height / 4 })
+        img.set({ 
+          originX: 'center',
+          originY: 'center',
+          left: fc.width / 2, 
+          top: fc.height / 2 
+        })
         fc.add(img)
         fc.setActiveObject(img)
         fc.renderAll()
+        saveHistory()
       })
     } catch (err) {
       console.error('Failed to add image', err)
@@ -642,56 +709,7 @@ export function Editor() {
               drawSettings={drawSettings}
               onToggleDraw={toggleDraw}
               onUpdateDrawSettings={updateDrawSettings}
-              onRotate={() => {
-                const fc = fabricRef.current as any
-                const container = containerRef.current
-                if (!fc || !container) return
-                const bg = fc.backgroundImage
-                if (bg) {
-                  const currentAngle = (bg.angle || 0)
-                  const newAngle = (currentAngle + 90) % 360
-                  
-                  const isSideways = newAngle === 90 || newAngle === 270
-                  const rawW = bg.width
-                  const rawH = bg.height
-                  
-                  const activeW = isSideways ? rawH : rawW
-                  const activeH = isSideways ? rawW : rawH
-                  
-                  const maxW = Math.max(100, container.clientWidth - 16)
-                  const maxH = Math.max(100, container.clientHeight - 16)
-                  
-                  const scale = Math.min(maxW / activeW, maxH / activeH)
-                  const finalW = Math.round(activeW * scale)
-                  const finalH = Math.round(activeH * scale)
-                  
-                  const oldW = fc.width
-                  
-                  fc.setDimensions({ width: finalW, height: finalH })
-                  
-                  bg.set({
-                    angle: newAngle,
-                    scaleX: scale,
-                    scaleY: scale,
-                    originX: 'center',
-                    originY: 'center',
-                    left: finalW / 2,
-                    top: finalH / 2
-                  })
-                  
-                  const rescaleFactor = finalW / oldW
-                  fc.getObjects().forEach((o: any) => {
-                    o.left *= rescaleFactor
-                    o.top *= rescaleFactor
-                    o.scaleX = (o.scaleX || 1) * rescaleFactor
-                    o.scaleY = (o.scaleY || 1) * rescaleFactor
-                    o.setCoords()
-                  })
-                  
-                  fc.renderAll()
-                  saveHistory()
-                }
-              }}
+              onRotate={handleRotate}
               onCrop={toggleCrop}
               onToggleLayers={() => setShowLayersPanel(p => !p)}
               onAddText={addText}
@@ -765,15 +783,7 @@ export function Editor() {
                         {hasSelected ? <Edit2 size={16} className="text-[#3b82f6]" /> : <Type size={16} />}
                         Text Editor
                       </button>
-                      <button onClick={() => {
-                        const fc = fabricRef.current as any
-                        const bg = fc?.backgroundImage
-                        if (bg) {
-                          bg.angle = ((bg.angle || 0) + 90) % 360
-                          fc.renderAll()
-                          saveHistory()
-                        }
-                      }} className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl hover:bg-white/10 text-white/80 transition-colors text-[13px] font-semibold">
+                      <button onClick={handleRotate} className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl hover:bg-white/10 text-white/80 transition-colors text-[13px] font-semibold">
                         <RotateCw size={16} /> Rotate
                       </button>
                       <button onClick={toggleCrop} className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl hover:bg-white/10 text-white/80 transition-colors text-[13px] font-semibold">
@@ -807,17 +817,17 @@ export function Editor() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 20 }}
-                className={`${isFullScreen ? 'fixed bottom-0 left-0 right-0 z-50 bg-[#111113]/95 backdrop-blur-xl border-t border-white/10 pt-4' : 'pt-2'} px-4 pb-4 flex gap-3`}
+                className={`${isFullScreen ? 'absolute bottom-8 left-0 right-0 z-50 bg-[#111113]/95 backdrop-blur-xl border-t border-white/10 pt-3 pb-safe' : 'pt-2'} px-4 pb-4 flex gap-3`}
               >
                 <button
                   onClick={cancelCrop}
-                  className="flex-1 py-4 rounded-[16px] bg-[#1c1c1e] text-white font-bold text-[16px] border border-white/10 hover:bg-[#252528] active:scale-[0.98] transition-all"
+                  className="flex-1 py-3 rounded-[14px] bg-[#1c1c1e] text-white font-bold text-[14px] border border-white/10 hover:bg-[#252528] active:scale-[0.98] transition-all"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={confirmCrop}
-                  className="flex-1 py-4 rounded-[16px] bg-[#229ED9] text-white font-bold text-[16px] shadow-[0_4px_24px_rgba(34,158,217,0.4)] hover:bg-[#2ab6f6] active:scale-[0.98] transition-all"
+                  className="flex-1 py-3 rounded-[14px] bg-[#229ED9] text-white font-bold text-[14px] shadow-[0_4px_24px_rgba(34,158,217,0.4)] hover:bg-[#2ab6f6] active:scale-[0.98] transition-all"
                 >
                   Confirm Crop
                 </button>
