@@ -1,23 +1,32 @@
 import { useNavigate } from 'react-router-dom'
 import { Gift, Zap, Sparkles, Play } from 'lucide-react'
 import logoMemeZone from '@assets/Logo/LogoMemeZone.webp'
+import banner1 from '@assets/images/Banners/banner1 (1).webp'
+import banner2 from '@assets/images/Banners/baner2.webp'
 import { GridScan } from '@components/home/GridScan'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 
 export function Home() {
   const navigate = useNavigate()
   const [currentBanner, setCurrentBanner] = useState(0)
+  const scrollRef = useRef<HTMLDivElement>(null)
   
   const banners = [
-    { title: "Create Viral Memes", desc: "Start designing now!", icon: <Play className="text-blue-400 w-6 h-6" />, bg: "bg-blue-500/20" },
-    { title: "Special Offer", desc: "Get 50% off on premium", icon: <Gift className="text-emerald-400 w-6 h-6" />, bg: "bg-emerald-500/20" },
-    { title: "Daily Challenges", desc: "Participate and win stars", icon: <Zap className="text-amber-400 w-6 h-6" />, bg: "bg-amber-500/20" }
+    { src: banner1, id: 1 },
+    { src: banner2, id: 2 }
   ]
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setCurrentBanner((prev) => (prev + 1) % banners.length)
-    }, 3000)
+      setCurrentBanner((prev) => {
+        const next = (prev + 1) % banners.length
+        if (scrollRef.current) {
+          const width = scrollRef.current.clientWidth
+          scrollRef.current.scrollTo({ left: width * next, behavior: 'smooth' })
+        }
+        return next
+      })
+    }, 4000)
     return () => clearInterval(timer)
   }, [])
 
@@ -65,21 +74,44 @@ export function Home() {
 
         </div>
       </div>
-      {/* Moving Banner */}
-      <div className="px-2">
+      {/* Swipeable Image Banners */}
+      <div className="relative w-full flex flex-col items-center">
         <div 
-          onClick={() => navigate('/editor')}
-          className="w-full bg-[#141416] border border-white/10 rounded-3xl p-4 relative overflow-hidden h-32 flex flex-col justify-between cursor-pointer transition-opacity duration-500"
+          ref={scrollRef}
+          className="flex overflow-x-auto snap-x snap-mandatory w-full [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+          onScroll={(e) => {
+            const scrollLeft = e.currentTarget.scrollLeft
+            const width = e.currentTarget.clientWidth
+            const index = Math.round(scrollLeft / width)
+            if (index !== currentBanner) {
+              setCurrentBanner(index)
+            }
+          }}
         >
-          {banners[currentBanner].icon}
-          <div>
-            <h3 className="font-bold text-sm text-white">{banners[currentBanner].title}</h3>
-            <p className="text-[10px] text-white/60 mt-0.5">{banners[currentBanner].desc}</p>
-          </div>
-          <div className={`absolute -bottom-4 -right-4 w-20 h-20 rounded-full blur-xl ${banners[currentBanner].bg}`} />
+          {banners.map((b, i) => (
+            <div key={b.id} className="min-w-full snap-center px-4">
+              <img 
+                src={b.src} 
+                alt={`Banner ${i + 1}`} 
+                className="w-full h-auto rounded-[20px] shadow-lg cursor-pointer" 
+                onClick={() => navigate('/editor')}
+              />
+            </div>
+          ))}
+        </div>
+        
+        {/* Dots indicator */}
+        <div className="flex gap-1.5 mt-3">
+          {banners.map((_, i) => (
+            <div 
+              key={i} 
+              className={`h-1.5 rounded-full transition-all duration-300 ${
+                currentBanner === i ? 'w-6 bg-[#229ED9]' : 'w-1.5 bg-white/20'
+              }`}
+            />
+          ))}
         </div>
       </div>
-
      
 
       <div>

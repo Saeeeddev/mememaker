@@ -5,7 +5,7 @@ import { MyMemes } from '@components/profile/MyMemes'
 import { InviteFriends } from '@components/profile/InviteFriends'
 import GradientWaves from '@components/profile/GradientWaves'
 import LiquidGlass from 'liquid-glass-react'
-import starsIcon from '@assets/icons/stars.png'
+import starsIcon from '@assets/icons/Stars.webp'
 
 const Profile = () => {
   const { openTopup } = useAppStore()

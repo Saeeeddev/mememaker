@@ -31,7 +31,7 @@ export const TopupPopup = () => {
 
             {/* Title */}
             <div className="flex items-center justify-center gap-2 mb-6">
-              <span className="text-[#f3a522] drop-shadow-[0_0_8px_rgba(243,165,34,0.65)] text-xl">⭐</span>
+              <span className="text-[#f3a522] drop-shadow-[0_0_8px_rgba(243,165,34,0.65)] text-xl"></span>
               <span className="font-bold text-white text-[17px]">Top up Stars</span>
             </div>
 

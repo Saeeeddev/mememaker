@@ -44,6 +44,8 @@ interface EditorCanvasProps {
   onRedo?: () => void
   canUndo?: boolean
   canRedo?: boolean
+  isFullScreen?: boolean
+  onToggleFullScreen?: () => void
 }
 
 /** Converts Hex / RGB + opacity into RGBA string for Fabric freeDrawingBrush */
@@ -99,6 +101,8 @@ export function EditorCanvas({
   onRedo,
   canUndo,
   canRedo,
+  isFullScreen,
+  onToggleFullScreen,
 }: EditorCanvasProps) {
   const [showDrawSettings, setShowDrawSettings] = useState(false)
 
@@ -278,16 +282,19 @@ export function EditorCanvas({
         </div>
 
         {/* Floating Full Size Button (Bottom Right) */}
-        <button
-          onClick={() => {}}
-          className="absolute bottom-3 right-3 w-10 h-10 rounded-[12px] bg-[#1c1c1e]/80 backdrop-blur-md border border-white/10 flex items-center justify-center text-white/80 hover:bg-white/20 hover:text-white transition-all shadow-lg active:scale-95"
-        >
-          <Maximize size={18} />
-        </button>
+        {!isFullScreen && (
+          <button
+            onClick={onToggleFullScreen}
+            className="absolute bottom-3 right-3 w-10 h-10 rounded-[12px] bg-[#1c1c1e]/80 backdrop-blur-md border border-white/10 flex items-center justify-center text-white/80 hover:bg-white/20 hover:text-white transition-all shadow-lg active:scale-95 z-40"
+          >
+            <Maximize size={18} />
+          </button>
+        )}
       </div>
 
       {/* Vertical side toolbar */}
-      <div className="flex flex-col gap-2 w-12 shrink-0">
+      {!isFullScreen && (
+        <div className="flex flex-col gap-2 w-12 shrink-0">
         {/* Draw button */}
         <button
           onClick={handleToggleDraw}
@@ -348,6 +355,7 @@ export function EditorCanvas({
           </span>
         </button>
       </div>
+      )}
     </div>
   )
 }

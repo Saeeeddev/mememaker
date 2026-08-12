@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Search, Upload, Check } from 'lucide-react'
+import { Search, Upload, Check, RotateCw, Crop, Pencil, X, Type, Sparkles, Undo2, Edit2, ChevronLeft, ChevronRight } from 'lucide-react'
 import {
   EditorTopBar,
   EditorCanvas,
@@ -78,7 +78,13 @@ export function Editor() {
   const [page, setPage] = useState(1)
   const [searchQ, setSearchQ] = useState('')
   const [memesLoading, setMemesLoading] = useState(false)
+  const [isSearching, setIsSearching] = useState(false)
   const [pickerSelectedSrc, setPickerSelectedSrc] = useState<string | null>(null)
+  
+  // ── Trending picker state ──
+  const [pickerTab, setPickerTab] = useState<'all' | 'trending'>('all')
+  const [trendingMemes, setTrendingMemes] = useState<MemeTemplate[]>([])
+  const [trendingLoading, setTrendingLoading] = useState(false)
 
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -91,6 +97,8 @@ export function Editor() {
   const [drawSettings, setDrawSettings] = useState<DrawSettings>(DEFAULT_DRAW)
   const [showEditPanel, setShowEditPanel] = useState(false)
   const [showLayersPanel, setShowLayersPanel] = useState(false)
+  const [isFullScreen, setIsFullScreen] = useState(false)
+  const [isFullScreenPanelOpen, setIsFullScreenPanelOpen] = useState(false)
   const [isCropping, setIsCropping] = useState(false)
   const [textEdit, setTextEdit] = useState<TextEditState>({
     text: '',
@@ -171,23 +179,68 @@ export function Editor() {
   function loadMemes() {
     if (memes.length > 0) return
     setMemesLoading(true)
-    fetch('https://api.imgflip.com/get_memes')
+    fetch('https://justmeme.wtf/api/v1/templates?limit=100')
       .then(r => r.json())
       .then(d => {
         if (d.success) {
-          setMemes(d.data.memes)
-          setFiltered(d.data.memes)
+          setMemes(d.templates)
+          setFiltered(d.templates)
         }
       })
       .catch(() => {})
       .finally(() => setMemesLoading(false))
   }
 
-  // ── Search filter ──
+  // ── Fetch trending memes (lazy — only when trending tab is opened) ──
   useEffect(() => {
-    const q = searchQ.toLowerCase()
-    setFiltered(memes.filter(m => m.name.toLowerCase().includes(q)))
+    if (pickerTab === 'trending' && trendingMemes.length === 0) {
+      setTrendingLoading(true)
+      fetch('https://justmeme.wtf/api/v1/trending')
+        .then(r => r.json())
+        .then(d => {
+          if (d.success) {
+            setTrendingMemes(d.trending)
+          }
+        })
+        .catch(() => {})
+        .finally(() => setTrendingLoading(false))
+    }
+  }, [pickerTab, trendingMemes.length])
+
+  // ── Search filter (Client-side for <2 chars, Server-side for >= 2 chars) ──
+  useEffect(() => {
+    const q = searchQ.trim().toLowerCase()
     setPage(1)
+    
+    if (q.length < 2) {
+      setFiltered(memes.filter(m => m.name.toLowerCase().includes(q)))
+      return
+    }
+
+    let isActive = true
+    setIsSearching(true)
+    
+    const timer = setTimeout(() => {
+      fetch(`https://justmeme.wtf/api/v1/templates/search?q=${encodeURIComponent(q)}`)
+        .then(r => r.json())
+        .then(d => {
+          if (!isActive) return
+          if (d.success) {
+            setFiltered(d.templates)
+          } else {
+            setFiltered([])
+          }
+        })
+        .catch(() => {})
+        .finally(() => {
+          if (isActive) setIsSearching(false)
+        })
+    }, 400) // debounce
+
+    return () => {
+      isActive = false
+      clearTimeout(timer)
+    }
   }, [searchQ, memes])
 
   const visibleMemes = filtered.slice(0, page * PER_PAGE)
@@ -567,14 +620,18 @@ export function Editor() {
       ) : (
         <>
           {/* ── Top bar ── */}
-          <EditorTopBar
-            onAddImage={() => addImageInputRef.current?.click()}
-            onChangeTemplate={openPicker}
-          />
+          {!isFullScreen && (
+            <EditorTopBar
+              onAddImage={() => addImageInputRef.current?.click()}
+              onChangeTemplate={openPicker}
+            />
+          )}
 
           {/* ── Canvas + side toolbar (flex-1 fills all space between top and bottom) ── */}
-          <div className="relative flex-1 flex flex-col min-h-0 min-w-0">
+          <div className={`relative flex-1 flex flex-col min-h-0 min-w-0 ${isFullScreen ? 'fixed inset-0 z-50 bg-black' : ''}`}>
             <EditorCanvas
+              isFullScreen={isFullScreen}
+              onToggleFullScreen={() => setIsFullScreen(prev => !prev)}
               canvasKey={canvasKey}
               canvasRef={canvasRef}
               containerRef={containerRef}
@@ -683,12 +740,79 @@ export function Editor() {
                 </motion.div>
               )}
             </AnimatePresence>
+
+            {/* ── Full Screen Right Panel ── */}
+            <AnimatePresence>
+              {isFullScreen && (
+                <div className="absolute right-0 top-1/2 -translate-y-1/2 flex items-center z-50">
+                  {/* Toggle handle */}
+                  <button 
+                    onClick={() => setIsFullScreenPanelOpen(!isFullScreenPanelOpen)}
+                    className="w-6 h-12 bg-[#1c1c1e]/90 backdrop-blur-md border border-white/10 border-r-0 rounded-l-xl flex items-center justify-center shadow-[-4px_0_16px_rgba(0,0,0,0.3)] hover:bg-[#252528] transition-colors text-white/60 hover:text-white"
+                  >
+                    {isFullScreenPanelOpen ? <ChevronRight size={16} strokeWidth={2.5} /> : <ChevronLeft size={16} strokeWidth={2.5} />}
+                  </button>
+
+                  {/* Panel Content */}
+                  <motion.div
+                    initial={{ width: 0, opacity: 0 }}
+                    animate={{ width: isFullScreenPanelOpen ? 180 : 0, opacity: isFullScreenPanelOpen ? 1 : 0 }}
+                    className="overflow-hidden bg-[#1c1c1e]/95 backdrop-blur-xl border-y border-l border-white/10 rounded-l-2xl h-auto py-2 shadow-[-8px_0_32px_rgba(0,0,0,0.5)]"
+                  >
+                    <div className="w-[180px] flex flex-col gap-1 px-2">
+                      <button onClick={openPicker} className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl hover:bg-white/10 text-white/80 transition-colors text-[13px] font-semibold">
+                        <Search size={16} /> Change Template
+                      </button>
+                      <button onClick={() => addImageInputRef.current?.click()} className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl hover:bg-white/10 text-white/80 transition-colors text-[13px] font-semibold">
+                        <Upload size={16} /> Add Image
+                      </button>
+                      <button onClick={undo} disabled={!canUndo} className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-xl transition-colors text-[13px] font-semibold ${canUndo ? 'hover:bg-white/10 text-white/80' : 'text-white/30 cursor-not-allowed'}`}>
+                        <Undo2 size={16} /> Recent
+                      </button>
+                      <button onClick={hasSelected ? () => { if (isDrawingMode) toggleDraw(); setShowEditPanel(true); } : addText} className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl hover:bg-white/10 text-white/80 transition-colors text-[13px] font-semibold">
+                        {hasSelected ? <Edit2 size={16} className="text-[#3b82f6]" /> : <Type size={16} />}
+                        Text Editor
+                      </button>
+                      <button onClick={() => {
+                        const fc = fabricRef.current as any
+                        const bg = fc?.backgroundImage
+                        if (bg) {
+                          bg.angle = ((bg.angle || 0) + 90) % 360
+                          fc.renderAll()
+                          saveHistory()
+                        }
+                      }} className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl hover:bg-white/10 text-white/80 transition-colors text-[13px] font-semibold">
+                        <RotateCw size={16} /> Rotate
+                      </button>
+                      <button onClick={toggleCrop} className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl hover:bg-white/10 text-white/80 transition-colors text-[13px] font-semibold">
+                        <Crop size={16} /> Crop
+                      </button>
+                      <button onClick={toggleDraw} className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-xl transition-colors text-[13px] font-semibold ${isDrawingMode ? 'bg-[#229ED9]/20 text-[#229ED9]' : 'hover:bg-white/10 text-white/80'}`}>
+                        <Pencil size={16} /> Draw
+                      </button>
+                      <button onClick={() => {}} className="relative flex items-center gap-3 w-full px-3 py-2.5 rounded-xl hover:bg-violet-500/10 text-violet-400 transition-colors text-[13px] font-semibold">
+                        <Sparkles size={16} /> AI Generate
+                        <span className="absolute right-3 bg-violet-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-sm">SOON</span>
+                      </button>
+                      
+                      <div className="h-px bg-white/10 my-1 mx-2" />
+                      
+                      <button onClick={() => { setIsFullScreen(false); setIsFullScreenPanelOpen(false); }} className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl hover:bg-red-500/10 text-red-400 transition-colors text-[13px] font-semibold mt-1">
+                        <X size={16} /> Exit
+                      </button>
+                    </div>
+                  </motion.div>
+                </div>
+              )}
+            </AnimatePresence>
           </div>
 
           {/* ── Bottom actions ── */}
-          <EditorBottomActions
-            onSave={sendToBot}
-          />
+          {!isFullScreen && (
+            <EditorBottomActions
+              onSave={sendToBot}
+            />
+          )}
         </>
       )}
 
@@ -752,16 +876,34 @@ export function Editor() {
                   <Search size={15} className="text-white/40 shrink-0" />
                   <input
                     value={searchQ}
-                    onChange={e => setSearchQ(e.target.value)}
+                    onChange={e => { setSearchQ(e.target.value); setPickerTab('all'); }}
                     placeholder="Search meme templates..."
                     className="flex-1 bg-transparent text-white text-[14px] placeholder-white/30 outline-none"
                   />
                 </div>
               </div>
 
+              {/* Tabs */}
+              <div className="flex gap-6 px-5 mb-3 border-b border-white/10 shrink-0">
+                <button 
+                  onClick={() => setPickerTab('all')}
+                  className={`pb-2.5 text-[14px] font-semibold transition-colors relative ${pickerTab === 'all' ? 'text-white' : 'text-white/40 hover:text-white/70'}`}
+                >
+                  All
+                  {pickerTab === 'all' && <motion.div layoutId="pickerTabLine" className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#229ED9]" />}
+                </button>
+                <button 
+                  onClick={() => setPickerTab('trending')}
+                  className={`pb-2.5 text-[14px] font-semibold transition-colors relative ${pickerTab === 'trending' ? 'text-white' : 'text-white/40 hover:text-white/70'}`}
+                >
+                  Trending
+                  {pickerTab === 'trending' && <motion.div layoutId="pickerTabLine" className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#229ED9]" />}
+                </button>
+              </div>
+
               {/* Grid — scrollable */}
               <div className="flex-1 overflow-y-auto px-4 pb-4">
-                {memesLoading ? (
+                {(pickerTab === 'all' ? memesLoading || isSearching : trendingLoading) ? (
                   <div className="grid grid-cols-3 gap-2.5">
                     {Array.from({ length: 12 }).map((_, i) => (
                       <div key={i} className="aspect-square rounded-[12px] bg-[#1c1c1e] animate-pulse" />
@@ -770,26 +912,28 @@ export function Editor() {
                 ) : (
                   <>
                     <div className="grid grid-cols-3 gap-2.5">
-                      {/* Blank */}
-                      <button
-                        onClick={() => setPickerSelectedSrc(prev => prev === BLANK_IMAGE ? null : BLANK_IMAGE)}
-                        className={`relative aspect-square rounded-[12px] overflow-hidden border-2 transition-all bg-white/90 flex items-center justify-center ${
-                          pickerSelectedSrc === BLANK_IMAGE
-                            ? 'border-[#229ED9] shadow-[0_0_0_3px_rgba(34,158,217,0.25)]'
-                            : 'border-transparent'
-                        }`}
-                      >
-                        <span className="text-black/30 font-bold text-xs">BLANK</span>
-                        {pickerSelectedSrc === BLANK_IMAGE && (
-                          <div className="absolute inset-0 bg-[#229ED9]/20 flex items-center justify-center">
-                            <div className="w-7 h-7 rounded-full bg-[#229ED9] flex items-center justify-center">
-                              <Check size={14} className="text-white" />
+                      {/* Blank (Only in All tab) */}
+                      {pickerTab === 'all' && (
+                        <button
+                          onClick={() => setPickerSelectedSrc(prev => prev === BLANK_IMAGE ? null : BLANK_IMAGE)}
+                          className={`relative aspect-square rounded-[12px] overflow-hidden border-2 transition-all bg-white/90 flex items-center justify-center ${
+                            pickerSelectedSrc === BLANK_IMAGE
+                              ? 'border-[#229ED9] shadow-[0_0_0_3px_rgba(34,158,217,0.25)]'
+                              : 'border-transparent'
+                          }`}
+                        >
+                          <span className="text-black/30 font-bold text-xs">BLANK</span>
+                          {pickerSelectedSrc === BLANK_IMAGE && (
+                            <div className="absolute inset-0 bg-[#229ED9]/20 flex items-center justify-center">
+                              <div className="w-7 h-7 rounded-full bg-[#229ED9] flex items-center justify-center">
+                                <Check size={14} className="text-white" />
+                              </div>
                             </div>
-                          </div>
-                        )}
-                      </button>
+                          )}
+                        </button>
+                      )}
 
-                      {visibleMemes.map(meme => (
+                      {(pickerTab === 'all' ? visibleMemes : trendingMemes).map(meme => (
                         <button
                           key={meme.id}
                           onClick={() => setPickerSelectedSrc(prev => prev === meme.url ? null : meme.url)}
@@ -811,13 +955,22 @@ export function Editor() {
                       ))}
                     </div>
 
-                    {hasMore && (
+                    {pickerTab === 'all' && hasMore && (
                       <button
                         onClick={() => setPage(p => p + 1)}
                         className="w-full mt-4 py-3 rounded-[13px] bg-[#1c1c1e] border border-white/10 text-white/60 text-[13px] font-semibold hover:bg-white/8 transition-colors"
                       >
                         Load more
                       </button>
+                    )}
+
+                    {pickerTab === 'all' && !hasMore && !isSearching && searchQ.length === 0 && (
+                      <div className="w-full mt-8 pb-4 flex flex-col items-center justify-center text-center">
+                        <Search size={22} className="text-white/20 mb-2" />
+                        <p className="text-white/40 text-[12px] leading-relaxed max-w-[200px]">
+                          Can't find it?<br/>Use the search bar above to explore 2000+ templates!
+                        </p>
+                      </div>
                     )}
                   </>
                 )}

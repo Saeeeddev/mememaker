@@ -1,5 +1,5 @@
 import type { Task } from '@/types/task'
-import starsIcon from '@assets/icons/stars.png'
+import starsIcon from '@assets/icons/Stars.webp'
 
 interface TaskCardProps {
   task: Task

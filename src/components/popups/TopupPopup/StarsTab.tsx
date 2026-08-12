@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import starsIcon from '@assets/icons/stars.png'
+import starsIcon from '@assets/icons/Stars.webp'
 
 export const StarsTab = () => {
   const [amount, setAmount] = useState('0')
