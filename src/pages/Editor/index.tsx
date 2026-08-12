@@ -100,6 +100,7 @@ export function Editor() {
   const [isFullScreen, setIsFullScreen] = useState(false)
   const [isFullScreenPanelOpen, setIsFullScreenPanelOpen] = useState(false)
   const [isCropping, setIsCropping] = useState(false)
+  const [isPickerReady, setIsPickerReady] = useState(false)
   const [textEdit, setTextEdit] = useState<TextEditState>({
     text: '',
     fontFamily: 'Impact',
@@ -636,8 +637,12 @@ export function Editor() {
   }
 
   function openPicker() {
-    loadMemes()
+    setIsPickerReady(false)
     setStep('pick')
+    setTimeout(() => {
+      loadMemes()
+      setIsPickerReady(true)
+    }, 300)
   }
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -930,9 +935,9 @@ export function Editor() {
 
               {/* Grid — scrollable */}
               <div className="flex-1 overflow-y-auto px-4 pb-4">
-                {(pickerTab === 'all' ? memesLoading || isSearching : trendingLoading) ? (
+                {(!isPickerReady || (pickerTab === 'all' ? memesLoading || isSearching : trendingLoading)) ? (
                   <div className="grid grid-cols-3 gap-2.5">
-                    {Array.from({ length: 12 }).map((_, i) => (
+                    {Array.from({ length: 15 }).map((_, i) => (
                       <div key={i} className="aspect-square rounded-[12px] bg-[#1c1c1e] animate-pulse" />
                     ))}
                   </div>

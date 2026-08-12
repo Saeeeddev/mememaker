@@ -31,20 +31,20 @@ export function Home() {
   }, [])
 
   return (
-    <div className="space-y-6 pt-2 bg-[#000000]">
+    <div className="space-y-6 bg-[#000000]">
      
       
  {/* Featured Large Card */}
-      <div>
-        <div className="bg-transparent text-center relative overflow-hidden">
-
-          {/* GridScan background — zero padding, sticks to all sides */}
-          <div style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', zIndex: 0 }}>
+      <div className="-mt-[calc(1rem+env(safe-area-inset-top)+8px)] -mx-4 h-[40dvh] flex flex-col">
+        
+        {/* Top area with GridScan background */}
+        <div className="relative flex-1 flex flex-col overflow-hidden items-center justify-center pt-[calc(1rem+env(safe-area-inset-top)+20px)] pb-2 px-6">
+          <div className="absolute inset-0 z-0">
             <GridScan
               sensitivity={0.55}
               lineThickness={1.1}
               linesColor="#4f2797"
-              gridScale={0.09}
+              gridScale={0.045}
               scanColor="#2654d1"
               scanOpacity={0.4}
               enablePost={false}
@@ -58,22 +58,28 @@ export function Home() {
               showPreview={false}
             />
           </div>
+          
+          <div className="relative z-10 flex flex-col items-center mt-2">
+            <img src={logoMemeZone} alt="Meme Zone" className="w-36 h-36 object-contain drop-shadow-2xl" />
+            <p className="text-white/50 text-xs mt-4">Create viral memes every day!</p>
+          </div>
+        </div>
 
-          {/* Inner content — own padding, independent of GridScan */}
-          <div className="relative px-6 pb-6">
-            <img src={logoMemeZone} alt="Meme Zone" className="w-60 h-60 mx-auto mt-42 mb-6 object-contain drop-shadow-2xl" />
-            <p className="text-white/50 text-sm mb-6 max-w-[200px] mx-auto">Create viral memes every day!</p>
+        {/* Create Meme Button Area (GridScan ends exactly before this!) */}
+        <div className="px-6 pb-6 pt-4 shrink-0">
+          <div className="max-w-sm mx-auto w-full">
             <button
               onClick={() => navigate('/editor')}
-              className="w-full py-4 rounded-2xl bg-[#229ED9] font-bold text-lg shadow-[0_0_20px_rgba(34,158,217,0.3)] hover:bg-[#2AABEE] transition-all flex items-center justify-center gap-2"
+              className="w-full py-3.5 rounded-[14px] bg-[#229ED9] font-bold text-[16px] shadow-[0_0_20px_rgba(34,158,217,0.3)] hover:bg-[#2AABEE] transition-all flex items-center justify-center gap-2"
             >
-              <Play className="fill-current w-5 h-5" />
+              <Play className="fill-current w-4 h-4" />
               CREATE MEME
             </button>
           </div>
+        </div>
+
 
         </div>
-      </div>
       {/* Swipeable Image Banners */}
       <div className="relative w-full flex flex-col items-center">
         <div 
