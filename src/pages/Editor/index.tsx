@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Search, Upload, Check, RotateCw, Crop, Pencil, X, Type, Sparkles, Undo2, Edit2, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Search, Upload, Check, RotateCw, Crop, Pencil, X, Type, Sparkles, Undo2, Edit2, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react'
 import {
   EditorTopBar,
   EditorCanvas,
@@ -101,6 +101,7 @@ export function Editor() {
   const [isFullScreenPanelOpen, setIsFullScreenPanelOpen] = useState(false)
   const [isCropping, setIsCropping] = useState(false)
   const [isPickerReady, setIsPickerReady] = useState(false)
+  const [isTemplateApplying, setIsTemplateApplying] = useState(false)
   const [textEdit, setTextEdit] = useState<TextEditState>({
     text: '',
     fontFamily: 'Impact',
@@ -261,11 +262,21 @@ export function Editor() {
 
   // ── Go to editor with a chosen template ──
   const goToEdit = useCallback((src: string) => {
-    setSelectedSrc(src)
-    setCanvasKey(k => k + 1)
-    setStep('edit')
-    setPickerSelectedSrc(null)
-    setIsDrawingMode(false)
+    setIsTemplateApplying(true)
+    
+    // Allow UI to paint the loading spinner first
+    setTimeout(() => {
+      setStep('edit') // Trigger the slide-down animation
+      setIsDrawingMode(false)
+      
+      // Wait for the slide-down animation to finish before blocking main thread with Fabric
+      setTimeout(() => {
+        setSelectedSrc(src)
+        setCanvasKey(k => k + 1)
+        setPickerSelectedSrc(null)
+        setIsTemplateApplying(false)
+      }, 350)
+    }, 50)
   }, [])
 
   // ── Fabric init ──
@@ -1018,10 +1029,17 @@ export function Editor() {
                     className="absolute bottom-0 left-0 right-0 px-4 pb-4 pt-2 bg-gradient-to-t from-black via-black/80 to-transparent"
                   >
                     <button
-                      onClick={() => pickerSelectedSrc && goToEdit(pickerSelectedSrc)}
-                      className="w-full py-3.5 rounded-[16px] bg-[#229ED9] text-white font-bold text-[15px] shadow-[0_8px_24px_rgba(34,158,217,0.4)] active:scale-[0.98] transition-transform"
+                      onClick={() => !isTemplateApplying && pickerSelectedSrc && goToEdit(pickerSelectedSrc)}
+                      className="w-full py-3.5 rounded-[16px] bg-[#229ED9] text-white font-bold text-[15px] shadow-[0_8px_24px_rgba(34,158,217,0.4)] active:scale-[0.98] transition-transform flex items-center justify-center gap-2"
                     >
-                      Use This Template →
+                      {isTemplateApplying ? (
+                        <>
+                          <Loader2 className="w-5 h-5 animate-spin" />
+                          Preparing...
+                        </>
+                      ) : (
+                        'Use This Template →'
+                      )}
                     </button>
                   </motion.div>
                 )}
