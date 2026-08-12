@@ -401,6 +401,127 @@ export function useFabricCanvas({
       const fabric = window.fabric
       const container = containerRef.current
 
+      // --- CUSTOM CONTROLS OVERRIDE ---
+      if (!fabric.Object.prototype.customiseDone) {
+        fabric.Object.prototype.customiseDone = true
+        
+        fabric.Object.prototype.set({
+          transparentCorners: false,
+          borderColor: 'rgba(255,255,255,0.8)',
+          cornerSize: 28,
+          padding: 10,
+          cornerStyle: 'circle',
+          borderDashArray: undefined
+        })
+
+        const deleteSvg = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%23333" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`
+        const rotateSvg = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%23333" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>`
+        const scaleSvg = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%23333" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"></path><path d="M9 21H3v-6"></path><path d="M21 3l-7 7"></path><path d="M3 21l7-7"></path></svg>`
+
+        const deleteImg = new Image(); deleteImg.src = deleteSvg
+        const rotateImg = new Image(); rotateImg.src = rotateSvg
+        const scaleImg = new Image(); scaleImg.src = scaleSvg
+
+        function renderIcon(icon: HTMLImageElement) {
+          return function(this: any, ctx: CanvasRenderingContext2D, left: number, top: number) {
+            const size = this.cornerSize || 28
+            ctx.save()
+            ctx.translate(left, top)
+            
+            ctx.shadowColor = 'rgba(0,0,0,0.15)'
+            ctx.shadowBlur = 4
+            ctx.shadowOffsetY = 1
+            ctx.fillStyle = '#ffffff'
+            ctx.beginPath()
+            ctx.arc(0, 0, size/2, 0, 2 * Math.PI, false)
+            ctx.fill()
+            
+            ctx.shadowColor = 'transparent'
+            ctx.strokeStyle = 'rgba(0,0,0,0.1)'
+            ctx.lineWidth = 1
+            ctx.stroke()
+
+            if (icon && icon.complete) {
+              const iconSize = size * 0.55
+              ctx.drawImage(icon, -iconSize/2, -iconSize/2, iconSize, iconSize)
+            }
+            ctx.restore()
+          }
+        }
+
+        function renderCircle(this: any, ctx: CanvasRenderingContext2D, left: number, top: number) {
+          const size = this.cornerSize || 28
+          ctx.save()
+          ctx.translate(left, top)
+          
+          ctx.fillStyle = '#ffffff'
+          ctx.shadowColor = 'rgba(0,0,0,0.15)'
+          ctx.shadowBlur = 4
+          ctx.shadowOffsetY = 1
+          ctx.beginPath()
+          ctx.arc(0, 0, size/4, 0, 2 * Math.PI, false)
+          ctx.fill()
+          
+          ctx.shadowColor = 'transparent'
+          ctx.strokeStyle = 'rgba(0,0,0,0.1)'
+          ctx.lineWidth = 1
+          ctx.stroke()
+          ctx.restore()
+        }
+
+        const customControls = Object.assign({}, fabric.Object.prototype.controls)
+        
+        if (customControls.tl) {
+          customControls.tl = new fabric.Control({
+            ...customControls.tl,
+            render: renderIcon(deleteImg),
+            actionHandler: () => false,
+            mouseUpHandler: (eventData: any, transform: any) => {
+              const target = transform.target
+              const canvas = target.canvas
+              canvas.remove(target)
+              canvas.requestRenderAll()
+              return true
+            },
+            cursorStyle: 'pointer'
+          })
+        }
+        
+        if (customControls.tr && customControls.mtr) {
+          customControls.tr = new fabric.Control({
+            ...customControls.tr,
+            render: renderIcon(rotateImg),
+            actionHandler: customControls.mtr.actionHandler,
+            cursorStyle: 'grab'
+          })
+        }
+        
+        if (customControls.br) {
+          customControls.br = new fabric.Control({
+            ...customControls.br,
+            render: renderIcon(scaleImg)
+          })
+        }
+        
+        delete customControls.bl
+        delete customControls.mtr
+        
+        ;['mt', 'mb', 'ml', 'mr'].forEach(c => {
+          if (customControls[c]) {
+            customControls[c] = new fabric.Control({
+              ...customControls[c],
+              render: renderCircle
+            })
+          }
+        })
+
+        fabric.Text.prototype.controls = customControls
+        if (fabric.IText) fabric.IText.prototype.controls = customControls
+        if (fabric.Textbox) fabric.Textbox.prototype.controls = customControls
+        fabric.Image.prototype.controls = customControls
+      }
+      // --- END CUSTOM CONTROLS ---
+
       // Dispose existing fabric instance if present
       if (fabricRef.current) {
         try { (fabricRef.current as any).dispose() } catch (_) {}

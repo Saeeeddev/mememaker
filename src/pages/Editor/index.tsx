@@ -214,6 +214,7 @@ export function Editor() {
     
     if (q.length < 2) {
       setFiltered(memes.filter(m => m.name.toLowerCase().includes(q)))
+      setIsSearching(false)
       return
     }
 
