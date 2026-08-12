@@ -489,12 +489,19 @@ export function useFabricCanvas({
           })
         }
         
-        if (customControls.tr && customControls.mtr) {
+        if (customControls.tr) {
           customControls.tr = new fabric.Control({
             ...customControls.tr,
             render: renderIcon(rotateImg),
-            actionHandler: customControls.mtr.actionHandler,
-            cursorStyle: 'grab'
+            actionHandler: () => false,
+            mouseUpHandler: (_eventData: any, transform: any) => {
+              const target = transform.target
+              const currentAngle = target.angle || 0
+              target.rotate((currentAngle + 90) % 360)
+              target.canvas.requestRenderAll()
+              return true
+            },
+            cursorStyle: 'pointer'
           })
         }
         

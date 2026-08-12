@@ -718,36 +718,18 @@ export function Editor() {
               fabricRef={fabricRef}
             />
 
-            {/* ── Cropping UI Overlay ── */}
-            <AnimatePresence>
-              {isCropping && (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 20 }}
-                  className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-[#1c1c1e]/95 backdrop-blur-xl border border-white/10 rounded-full px-4 py-2 flex items-center gap-3 shadow-[0_8px_32px_rgba(0,0,0,0.5)] z-40"
-                >
-                  <button
-                    onClick={cancelCrop}
-                    className="text-white/60 hover:text-red-400 font-semibold text-[14px] px-3 py-1.5 transition-colors"
-                  >
-                    Cancel
-                  </button>
-                  <div className="w-px h-5 bg-white/10" />
-                  <button
-                    onClick={confirmCrop}
-                    className="text-[#229ED9] hover:text-[#3ab4f0] font-bold text-[14px] px-3 py-1.5 transition-colors flex items-center gap-1.5"
-                  >
-                    Confirm Crop
-                  </button>
-                </motion.div>
-              )}
-            </AnimatePresence>
+
 
             {/* ── Full Screen Right Panel ── */}
             <AnimatePresence>
               {isFullScreen && (
-                <div className="absolute right-0 top-1/2 -translate-y-1/2 flex items-center z-50">
+                <motion.div 
+                  className="absolute right-0 top-1/2 -translate-y-1/2 flex items-center z-50"
+                  initial={{ x: 180, opacity: 0 }}
+                  animate={{ x: isFullScreenPanelOpen ? 0 : 180, opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+                >
                   {/* Toggle handle */}
                   <button 
                     onClick={() => setIsFullScreenPanelOpen(!isFullScreenPanelOpen)}
@@ -757,11 +739,7 @@ export function Editor() {
                   </button>
 
                   {/* Panel Content */}
-                  <motion.div
-                    initial={{ width: 0, opacity: 0 }}
-                    animate={{ width: isFullScreenPanelOpen ? 180 : 0, opacity: isFullScreenPanelOpen ? 1 : 0 }}
-                    className="overflow-hidden bg-[#1c1c1e]/95 backdrop-blur-xl border-y border-l border-white/10 rounded-l-2xl h-auto py-2 shadow-[-8px_0_32px_rgba(0,0,0,0.5)]"
-                  >
+                  <div className="w-[180px] bg-[#1c1c1e]/95 backdrop-blur-xl border-y border-l border-white/10 rounded-l-2xl h-auto py-2 shadow-[-8px_0_32px_rgba(0,0,0,0.5)]">
                     <div className="w-[180px] flex flex-col gap-1 px-2">
                       <button onClick={openPicker} className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl hover:bg-white/10 text-white/80 transition-colors text-[13px] font-semibold">
                         <Search size={16} /> Change Template
@@ -772,7 +750,18 @@ export function Editor() {
                       <button onClick={undo} disabled={!canUndo} className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-xl transition-colors text-[13px] font-semibold ${canUndo ? 'hover:bg-white/10 text-white/80' : 'text-white/30 cursor-not-allowed'}`}>
                         <Undo2 size={16} /> Recent
                       </button>
-                      <button onClick={hasSelected ? () => { if (isDrawingMode) toggleDraw(); setShowEditPanel(true); } : addText} className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl hover:bg-white/10 text-white/80 transition-colors text-[13px] font-semibold">
+                      <button 
+                        onClick={() => { 
+                          if (hasSelected) {
+                            if (isDrawingMode) toggleDraw(); 
+                            setShowEditPanel(true); 
+                          } else {
+                            addText();
+                          }
+                          setIsFullScreenPanelOpen(false);
+                        }} 
+                        className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl hover:bg-white/10 text-white/80 transition-colors text-[13px] font-semibold"
+                      >
                         {hasSelected ? <Edit2 size={16} className="text-[#3b82f6]" /> : <Type size={16} />}
                         Text Editor
                       </button>
@@ -804,18 +793,43 @@ export function Editor() {
                         <X size={16} /> Exit
                       </button>
                     </div>
-                  </motion.div>
-                </div>
+                  </div>
+                </motion.div>
               )}
             </AnimatePresence>
           </div>
 
-          {/* ── Bottom actions ── */}
-          {!isFullScreen && (
-            <EditorBottomActions
-              onSave={sendToBot}
-            />
-          )}
+          {/* ── Bottom actions (or Crop actions) ── */}
+          <AnimatePresence mode="wait">
+            {isCropping ? (
+              <motion.div
+                key="crop-actions"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 20 }}
+                className={`${isFullScreen ? 'fixed bottom-0 left-0 right-0 z-50 bg-[#111113]/95 backdrop-blur-xl border-t border-white/10 pt-4' : 'pt-2'} px-4 pb-4 flex gap-3`}
+              >
+                <button
+                  onClick={cancelCrop}
+                  className="flex-1 py-4 rounded-[16px] bg-[#1c1c1e] text-white font-bold text-[16px] border border-white/10 hover:bg-[#252528] active:scale-[0.98] transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmCrop}
+                  className="flex-1 py-4 rounded-[16px] bg-[#229ED9] text-white font-bold text-[16px] shadow-[0_4px_24px_rgba(34,158,217,0.4)] hover:bg-[#2ab6f6] active:scale-[0.98] transition-all"
+                >
+                  Confirm Crop
+                </button>
+              </motion.div>
+            ) : (
+              !isFullScreen && (
+                <motion.div key="bottom-actions" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                  <EditorBottomActions onSave={sendToBot} />
+                </motion.div>
+              )
+            )}
+          </AnimatePresence>
         </>
       )}
 
