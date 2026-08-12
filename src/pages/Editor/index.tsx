@@ -125,6 +125,7 @@ export function Editor() {
 
   const undo = useCallback(() => {
     if (historyIndex.current > 0) {
+      setIsCropping(false)
       isHistoryProcessing.current = true
       historyIndex.current--
       loadHistoryState(historyRef.current[historyIndex.current])
@@ -133,6 +134,7 @@ export function Editor() {
 
   const redo = useCallback(() => {
     if (historyIndex.current < historyRef.current.length - 1) {
+      setIsCropping(false)
       isHistoryProcessing.current = true
       historyIndex.current++
       loadHistoryState(historyRef.current[historyIndex.current])
@@ -284,6 +286,20 @@ export function Editor() {
     if (patch.strokeColor !== undefined) active.set('stroke', patch.strokeColor)
     fc.renderAll()
     saveHistory()
+  }
+
+  function deleteText() {
+    const fc = fabricRef.current as any
+    if (!fc) return
+    const active = fc.getActiveObject()
+    if (active && active.type === 'text') {
+      fc.remove(active)
+      fc.discardActiveObject()
+      fc.renderAll()
+      setShowEditPanel(false)
+      setHasSelected(false)
+      saveHistory()
+    }
   }
 
 
@@ -681,6 +697,7 @@ export function Editor() {
         open={showEditPanel}
         textEdit={textEdit}
         onApply={applyTextEdit}
+        onDelete={deleteText}
         onClose={() => setShowEditPanel(false)}
       />
 

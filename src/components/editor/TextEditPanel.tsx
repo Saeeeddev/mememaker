@@ -1,15 +1,17 @@
 import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
+import { Trash2 } from 'lucide-react'
 import { FONTS, type TextEditState } from './types'
 
 interface TextEditPanelProps {
   open: boolean
   textEdit: TextEditState
   onApply: (patch: Partial<TextEditState>) => void
+  onDelete?: () => void
   onClose: () => void
 }
 
-export function TextEditPanel({ open, textEdit, onApply, onClose }: TextEditPanelProps) {
+export function TextEditPanel({ open, textEdit, onApply, onDelete, onClose }: TextEditPanelProps) {
   return createPortal(
     <AnimatePresence>
       {open && (
@@ -37,12 +39,22 @@ export function TextEditPanel({ open, textEdit, onApply, onClose }: TextEditPane
             {/* Title + close */}
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-white font-bold text-[16px]">Edit Text ✍️</h3>
-              <button
-                onClick={onClose}
-                className="px-4 py-1.5 rounded-[12px] bg-[#229ED9] text-white font-bold text-[14px] shadow-[0_4px_16px_rgba(34,158,217,0.3)] hover:bg-[#1a85b9] active:scale-[0.97] transition-all"
-              >
-                Done
-              </button>
+              <div className="flex items-center gap-2">
+                {onDelete && (
+                  <button
+                    onClick={onDelete}
+                    className="w-8 h-8 flex items-center justify-center rounded-[12px] bg-red-500/15 text-red-400 border border-red-500/20 active:scale-[0.97] transition-all"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                )}
+                <button
+                  onClick={onClose}
+                  className="px-4 py-1.5 rounded-[12px] bg-[#229ED9] text-white font-bold text-[14px] shadow-[0_4px_16px_rgba(34,158,217,0.3)] hover:bg-[#1a85b9] active:scale-[0.97] transition-all"
+                >
+                  Done
+                </button>
+              </div>
             </div>
 
             {/* Text input */}

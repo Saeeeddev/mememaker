@@ -482,7 +482,8 @@ export function useFabricCanvas({
         if (onSaveHistory) onSaveHistory()
       })
 
-      fc.on('object:modified', () => {
+      fc.on('object:modified', (e: any) => {
+        if (e.target?.name === 'cropRect') return;
         if (onSaveHistory) onSaveHistory()
       })
 
