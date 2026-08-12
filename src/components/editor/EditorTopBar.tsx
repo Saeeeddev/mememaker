@@ -1,10 +1,8 @@
-import { ImagePlus, Layers } from 'lucide-react'
+import { ImagePlus, Layers, History } from 'lucide-react'
 import { useAppStore } from '@store/useAppStore'
-import starsIcon from '@assets/icons/stars.png'
+import starsIcon from '@assets/icons/Stars.webp'
 
 interface EditorTopBarProps {
-  /** Called when user taps the top-left exit-fullscreen button */
-  onExit: () => void
   onAddImage: () => void
   onChangeTemplate: () => void
 }
@@ -40,7 +38,17 @@ export function EditorTopBar({ onAddImage, onChangeTemplate }: EditorTopBarProps
           className="flex-1 flex items-center justify-center gap-1.5 h-full text-white/70 hover:text-white hover:bg-white/5 transition-all text-[13px] font-semibold"
         >
           <Layers size={15} className="text-purple-400" />
-          Change Template
+          Template
+        </button>
+
+        <div className="w-px h-6 bg-white/10 shrink-0" />
+
+        <button
+          onClick={() => {}}
+          className="flex-1 flex items-center justify-center gap-1.5 h-full text-white/70 hover:text-white hover:bg-white/5 transition-all text-[13px] font-semibold"
+        >
+          <History size={15} className="text-green-400" />
+          Recent
         </button>
       </div>
     </div>

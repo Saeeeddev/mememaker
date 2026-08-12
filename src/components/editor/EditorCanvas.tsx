@@ -1,5 +1,5 @@
 import { useRef, useEffect, useState } from 'react'
-import { RotateCw, Crop, Pencil, X, Minus, Plus } from 'lucide-react'
+import { RotateCw, Crop, Pencil, X, Minus, Plus, Layers as LayersIcon, Type, Sparkles, Maximize, Edit2, Undo2, Redo2 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 
 /* Fabric loaded via CDN in index.html */
@@ -35,6 +35,15 @@ interface EditorCanvasProps {
   onUpdateDrawSettings: (patch: Partial<DrawSettings>) => void
   onRotate?: () => void
   onCrop?: () => void
+  onToggleLayers?: () => void
+  onAddText?: () => void
+  onEditText?: () => void
+  onGenerateAI?: () => void
+  hasSelected?: boolean
+  onUndo?: () => void
+  onRedo?: () => void
+  canUndo?: boolean
+  canRedo?: boolean
 }
 
 /** Converts Hex / RGB + opacity into RGBA string for Fabric freeDrawingBrush */
@@ -81,6 +90,15 @@ export function EditorCanvas({
   onUpdateDrawSettings,
   onRotate,
   onCrop,
+  onToggleLayers,
+  onAddText,
+  onEditText,
+  onGenerateAI,
+  hasSelected,
+  onUndo,
+  onRedo,
+  canUndo,
+  canRedo,
 }: EditorCanvasProps) {
   const [showDrawSettings, setShowDrawSettings] = useState(false)
 
@@ -110,7 +128,7 @@ export function EditorCanvas({
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.92, y: -10 }}
               transition={{ duration: 0.18 }}
-              className="absolute top-3 left-3 z-50 bg-[#15161a]/95 backdrop-blur-xl border border-white/15 rounded-[22px] p-4 w-64 shadow-[0_16px_40px_rgba(0,0,0,0.6)]"
+              className="absolute top-3 right-3 z-50 bg-[#15161a]/95 backdrop-blur-xl border border-white/15 rounded-[22px] p-4 w-64 shadow-[0_16px_40px_rgba(0,0,0,0.6)]"
             >
               {/* Header */}
               <div className="flex items-center justify-between mb-3 pb-2 border-b border-white/10">
@@ -220,6 +238,52 @@ export function EditorCanvas({
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* Floating Controls (Top Left) */}
+        <div className="absolute top-3 left-3 flex items-center gap-2">
+          {/* Layers Button */}
+          <button
+            onClick={onToggleLayers}
+            className="w-10 h-10 rounded-[12px] bg-[#1c1c1e]/80 backdrop-blur-md border border-white/10 flex items-center justify-center text-white/80 hover:bg-white/20 hover:text-white transition-all shadow-lg active:scale-95"
+          >
+            <LayersIcon size={18} />
+          </button>
+
+          {/* Undo/Redo Box */}
+          <div className="flex items-center h-10 rounded-[12px] bg-[#1c1c1e]/80 backdrop-blur-md border border-white/10 shadow-lg px-1">
+            <button
+              onClick={onUndo}
+              disabled={!canUndo}
+              className={`w-9 h-8 rounded-[8px] flex items-center justify-center transition-all ${
+                canUndo 
+                  ? 'text-white/80 hover:bg-white/20 hover:text-white active:scale-95' 
+                  : 'text-white/20 cursor-not-allowed'
+              }`}
+            >
+              <Undo2 size={16} />
+            </button>
+            <div className="w-px h-5 bg-white/10 mx-0.5" />
+            <button
+              onClick={onRedo}
+              disabled={!canRedo}
+              className={`w-9 h-8 rounded-[8px] flex items-center justify-center transition-all ${
+                canRedo 
+                  ? 'text-white/80 hover:bg-white/20 hover:text-white active:scale-95' 
+                  : 'text-white/20 cursor-not-allowed'
+              }`}
+            >
+              <Redo2 size={16} />
+            </button>
+          </div>
+        </div>
+
+        {/* Floating Full Size Button (Bottom Right) */}
+        <button
+          onClick={() => {}}
+          className="absolute bottom-3 right-3 w-10 h-10 rounded-[12px] bg-[#1c1c1e]/80 backdrop-blur-md border border-white/10 flex items-center justify-center text-white/80 hover:bg-white/20 hover:text-white transition-all shadow-lg active:scale-95"
+        >
+          <Maximize size={18} />
+        </button>
       </div>
 
       {/* Vertical side toolbar */}
@@ -260,6 +324,29 @@ export function EditorCanvas({
           <Crop size={17} />
           <span className="text-[8px] font-semibold tracking-wide text-white/40">Crop</span>
         </button>
+
+        {/* Text button */}
+        <button
+          onClick={hasSelected ? onEditText : onAddText}
+          title="Text"
+          className="w-12 h-12 rounded-[14px] bg-[#1c1c1e] border border-white/10 flex flex-col items-center justify-center gap-0.5 text-white/60 hover:bg-[#252528] hover:text-white/90 hover:border-white/20 active:scale-[0.95] transition-all"
+        >
+          {hasSelected ? <Edit2 size={17} className="text-[#3b82f6]" /> : <Type size={17} />}
+          <span className="text-[8px] font-semibold tracking-wide text-white/40">Text</span>
+        </button>
+
+        {/* AI Generate button */}
+        <button
+          onClick={onGenerateAI}
+          title="AI Generate"
+          className="relative w-12 h-12 rounded-[14px] bg-gradient-to-br from-violet-600/10 to-indigo-600/10 border border-violet-500/20 flex flex-col items-center justify-center gap-0.5 text-violet-400 hover:from-violet-600/20 hover:to-indigo-600/20 hover:text-violet-300 hover:border-violet-500/40 active:scale-[0.95] transition-all"
+        >
+          <Sparkles size={17} />
+          <span className="text-[8px] font-semibold tracking-wide">AI</span>
+          <span className="absolute -top-1 -right-1 bg-violet-500 text-white text-[6px] font-bold px-1 rounded-sm">
+            SOON
+          </span>
+        </button>
       </div>
     </div>
   )
@@ -278,6 +365,7 @@ export function useFabricCanvas({
   drawSettings,
   onSelectionCreated,
   onSelectionCleared,
+  onSaveHistory,
 }: {
   step: string
   canvasKey: number
@@ -288,6 +376,7 @@ export function useFabricCanvas({
   drawSettings?: DrawSettings
   onSelectionCreated: (e: { selected: SelectableObj[] }) => void
   onSelectionCleared: () => void
+  onSaveHistory?: () => void
 }) {
   const onSelRef = useRef(onSelectionCreated)
   onSelRef.current = onSelectionCreated
@@ -377,6 +466,7 @@ export function useFabricCanvas({
           })
           fc.add(wm)
           fc.renderAll()
+          if (onSaveHistory) onSaveHistory()
         },
         { crossOrigin: 'anonymous' }
       )
@@ -389,16 +479,31 @@ export function useFabricCanvas({
         if (e.path) {
           e.path.set({ selectable: false, evented: false })
         }
+        if (onSaveHistory) onSaveHistory()
+      })
+
+      fc.on('object:modified', () => {
+        if (onSaveHistory) onSaveHistory()
       })
 
       fc.on('object:added', (e: { target: { name: string } }) => {
-        if (e.target?.name !== 'watermark') {
+        if (e.target?.name !== 'watermark' && e.target?.name !== 'cropRect') {
           const objs = fc.getObjects()
           for (const o of objs) {
             if (o.name === 'watermark') { o.bringToFront(); break }
           }
+          // Do not save history when cropRect is added
+          if (onSaveHistory) onSaveHistory()
         }
       })
+
+      fc.on('object:removed', (e: { target: { name: string } }) => {
+        // Do not save history when cropRect is removed
+        if (e.target?.name !== 'cropRect' && onSaveHistory) {
+          onSaveHistory()
+        }
+      })
+
     }
 
     const timer = setTimeout(initCanvas, 40)

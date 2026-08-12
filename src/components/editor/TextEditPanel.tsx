@@ -1,5 +1,4 @@
 import { createPortal } from 'react-dom'
-import { Check } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { FONTS, type TextEditState } from './types'
 
@@ -40,9 +39,9 @@ export function TextEditPanel({ open, textEdit, onApply, onClose }: TextEditPane
               <h3 className="text-white font-bold text-[16px]">Edit Text ✍️</h3>
               <button
                 onClick={onClose}
-                className="w-8 h-8 rounded-full bg-white/8 flex items-center justify-center text-white/60 hover:bg-white/15 transition-colors"
+                className="px-4 py-1.5 rounded-[12px] bg-[#229ED9] text-white font-bold text-[14px] shadow-[0_4px_16px_rgba(34,158,217,0.3)] hover:bg-[#1a85b9] active:scale-[0.97] transition-all"
               >
-                <Check size={16} />
+                Done
               </button>
             </div>
 

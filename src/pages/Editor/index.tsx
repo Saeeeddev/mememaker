@@ -7,6 +7,7 @@ import {
   EditorBottomActions,
   TextEditPanel,
   useFabricCanvas,
+  LayersPanel,
   BOT_TOKEN,
   BLANK_IMAGE,
   type MemeTemplate,
@@ -30,6 +31,38 @@ interface DrawSettings {
 
 const PER_PAGE = 20
 const DEFAULT_DRAW: DrawSettings = { color: '#ef4444', width: 6, opacity: 1 }
+
+// ─────────────────────────────────────
+// Helpers
+// ─────────────────────────────────────
+async function getResizedImageURL(file: File, maxDim = 1920): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const img = new Image()
+    img.onload = () => {
+      let { width, height } = img
+      if (width > maxDim || height > maxDim) {
+        const scale = Math.min(maxDim / width, maxDim / height)
+        width = Math.round(width * scale)
+        height = Math.round(height * scale)
+      }
+      const canvas = document.createElement('canvas')
+      canvas.width = width
+      canvas.height = height
+      const ctx = canvas.getContext('2d')
+      if (ctx) {
+        ctx.drawImage(img, 0, 0, width, height)
+        canvas.toBlob((blob) => {
+          if (blob) resolve(URL.createObjectURL(blob))
+          else resolve(img.src)
+        }, file.type || 'image/jpeg', 0.9)
+      } else {
+        resolve(img.src)
+      }
+    }
+    img.onerror = reject
+    img.src = URL.createObjectURL(file)
+  })
+}
 
 // ─────────────────────────────────────
 // Editor Page
@@ -57,6 +90,8 @@ export function Editor() {
   const [isDrawingMode, setIsDrawingMode] = useState(false)
   const [drawSettings, setDrawSettings] = useState<DrawSettings>(DEFAULT_DRAW)
   const [showEditPanel, setShowEditPanel] = useState(false)
+  const [showLayersPanel, setShowLayersPanel] = useState(false)
+  const [isCropping, setIsCropping] = useState(false)
   const [textEdit, setTextEdit] = useState<TextEditState>({
     text: '',
     fontFamily: 'Impact',
@@ -64,6 +99,58 @@ export function Editor() {
     textColor: '#ffffff',
     strokeColor: '#000000',
   })
+
+  // ── History (Undo/Redo) ──
+  const historyRef = useRef<{ json: any; width: number; height: number }[]>([])
+  const historyIndex = useRef<number>(-1)
+  const isHistoryProcessing = useRef(false)
+  const [canUndo, setCanUndo] = useState(false)
+  const [canRedo, setCanRedo] = useState(false)
+
+  const saveHistory = useCallback(() => {
+    if (isHistoryProcessing.current) return
+    const fc = fabricRef.current as any
+    if (!fc) return
+    
+    const json = fc.toJSON(['name', 'selectable', 'evented', 'visible', 'lockMovementX', 'lockMovementY'])
+    const state = { json, width: fc.width, height: fc.height }
+    
+    historyRef.current = historyRef.current.slice(0, historyIndex.current + 1)
+    historyRef.current.push(state)
+    historyIndex.current = historyRef.current.length - 1
+    
+    setCanUndo(historyIndex.current > 0)
+    setCanRedo(false)
+  }, [])
+
+  const undo = useCallback(() => {
+    if (historyIndex.current > 0) {
+      isHistoryProcessing.current = true
+      historyIndex.current--
+      loadHistoryState(historyRef.current[historyIndex.current])
+    }
+  }, [])
+
+  const redo = useCallback(() => {
+    if (historyIndex.current < historyRef.current.length - 1) {
+      isHistoryProcessing.current = true
+      historyIndex.current++
+      loadHistoryState(historyRef.current[historyIndex.current])
+    }
+  }, [])
+
+  function loadHistoryState(state: any) {
+    const fc = fabricRef.current as any
+    if (!fc || !state) return
+    fc.clear()
+    fc.setDimensions({ width: state.width, height: state.height })
+    fc.loadFromJSON(state.json, () => {
+      fc.renderAll()
+      setCanUndo(historyIndex.current > 0)
+      setCanRedo(historyIndex.current < historyRef.current.length - 1)
+      isHistoryProcessing.current = false
+    })
+  }
 
   // ── Disable screen capture if possible ──
   useEffect(() => {
@@ -137,6 +224,7 @@ export function Editor() {
       setHasSelected(false)
       setShowEditPanel(false)
     },
+    onSaveHistory: saveHistory,
   })
 
   function onSel(e: { selected: SelectableObj[] }) {
@@ -156,6 +244,11 @@ export function Editor() {
   function addText() {
     if (!fabricRef.current) return
     const fc = fabricRef.current as any
+    if (isCropping) cancelCrop()
+    if (isDrawingMode) {
+      setIsDrawingMode(false)
+      fc.isDrawingMode = false
+    }
     const fabric = window.fabric
     const text = new fabric.Text('Your Text', {
       left: fc.width / 2,
@@ -190,19 +283,134 @@ export function Editor() {
     if (patch.textColor !== undefined) active.set('fill', patch.textColor)
     if (patch.strokeColor !== undefined) active.set('stroke', patch.strokeColor)
     fc.renderAll()
+    saveHistory()
   }
 
-  function deleteSelected() {
+
+
+  function toggleCrop() {
     const fc = fabricRef.current as any
     if (!fc) return
-    const active = fc.getActiveObject()
-    if (active && active.name !== 'watermark') {
-      fc.remove(active)
+    if (!isCropping) {
+      if (isDrawingMode) {
+        setIsDrawingMode(false)
+        fc.isDrawingMode = false
+      }
+      setShowEditPanel(false)
       fc.discardActiveObject()
+      setIsCropping(true)
+      const cropRect = new (window as any).fabric.Rect({
+        fill: 'rgba(0,0,0,0)',
+        stroke: '#229ED9',
+        strokeWidth: 3,
+        strokeDashArray: [10, 5],
+        width: fc.width * 0.8,
+        height: fc.height * 0.8,
+        left: fc.width * 0.1,
+        top: fc.height * 0.1,
+        cornerColor: '#229ED9',
+        cornerSize: 16,
+        transparentCorners: false,
+        name: 'cropRect'
+      })
+      fc.add(cropRect)
+      fc.setActiveObject(cropRect)
       fc.renderAll()
+    } else {
+      cancelCrop()
     }
-    setHasSelected(false)
-    setShowEditPanel(false)
+  }
+
+  function cancelCrop() {
+    setIsCropping(false)
+    const fc = fabricRef.current as any
+    if (!fc) return
+    const cropRect = fc.getObjects().find((o: any) => o.name === 'cropRect')
+    if (cropRect) fc.remove(cropRect)
+    fc.renderAll()
+  }
+
+  function confirmCrop() {
+    const fc = fabricRef.current as any
+    if (!fc) return
+    const cropRect = fc.getObjects().find((o: any) => o.name === 'cropRect')
+    if (!cropRect) return
+
+    let cropX = cropRect.left
+    let cropY = cropRect.top
+    let cropW = cropRect.getScaledWidth()
+    let cropH = cropRect.getScaledHeight()
+
+    cropX = Math.max(0, cropX)
+    cropY = Math.max(0, cropY)
+    if (cropX + cropW > fc.width) cropW = fc.width - cropX
+    if (cropY + cropH > fc.height) cropH = fc.height - cropY
+
+    fc.remove(cropRect)
+
+    const hiddenObjs: any[] = []
+    fc.getObjects().forEach((o: any) => {
+      if (o.visible) {
+        o.visible = false
+        hiddenObjs.push(o)
+      }
+    })
+    fc.renderAll()
+
+    const croppedData = fc.toDataURL({
+      left: cropX,
+      top: cropY,
+      width: cropW,
+      height: cropH,
+      format: 'png',
+      multiplier: 2
+    })
+
+    ;(window as any).fabric.Image.fromURL(croppedData, (newBg: any) => {
+      hiddenObjs.forEach(o => {
+        o.left -= cropX
+        o.top -= cropY
+        o.visible = true
+        o.setCoords()
+      })
+
+      const container = containerRef.current
+      if (container) {
+        const maxW = Math.max(100, container.clientWidth - 16)
+        const maxH = Math.max(100, container.clientHeight - 16)
+        
+        const rawW = newBg.width / 2
+        const rawH = newBg.height / 2
+        
+        const scale = Math.min(maxW / rawW, maxH / rawH)
+        const finalW = Math.round(rawW * scale)
+        const finalH = Math.round(rawH * scale)
+        
+        const rescaleFactor = finalW / cropW
+        hiddenObjs.forEach(o => {
+          o.left *= rescaleFactor
+          o.top *= rescaleFactor
+          o.scaleX = (o.scaleX || 1) * rescaleFactor
+          o.scaleY = (o.scaleY || 1) * rescaleFactor
+          o.setCoords()
+        })
+
+        fc.setDimensions({ width: finalW, height: finalH })
+        
+        fc.setBackgroundImage(newBg, fc.renderAll.bind(fc), {
+          originX: 'center',
+          originY: 'center',
+          left: finalW / 2,
+          top: finalH / 2,
+          scaleX: scale / 2,
+          scaleY: scale / 2
+        })
+      }
+
+      setIsCropping(false)
+      fc.renderAll()
+      saveHistory()
+    })
   }
 
   function toggleDraw() {
@@ -210,12 +418,17 @@ export function Editor() {
     if (!fc) return
     const next = !isDrawingMode
     fc.isDrawingMode = next
-    if (next && fc.freeDrawingBrush) {
-      fc.freeDrawingBrush.color = drawSettings.color
-      fc.freeDrawingBrush.width = drawSettings.width
+    if (next) {
+      if (fc.freeDrawingBrush) {
+        fc.freeDrawingBrush.color = drawSettings.color
+        fc.freeDrawingBrush.width = drawSettings.width
+      }
+      if (isCropping) cancelCrop()
+      setShowEditPanel(false)
+      fc.discardActiveObject()
+      setHasSelected(false)
     }
     setIsDrawingMode(next)
-    if (next) setHasSelected(false)
   }
 
   function updateDrawSettings(patch: Partial<DrawSettings>) {
@@ -253,42 +466,24 @@ export function Editor() {
       })
   }
 
-  function shareImage() {
-    const fc = fabricRef.current as any
-    if (!fc) return
-    fc.isDrawingMode = false
-    fc.discardActiveObject()
-    fc.renderAll()
-    const dataURL = fc.toDataURL({ format: 'png', quality: 1, multiplier: 3 })
-    fetch(dataURL)
-      .then(r => r.blob())
-      .then(async blob => {
-        const file = new File([blob], 'meme.png', { type: 'image/png' })
-        if (navigator.canShare?.({ files: [file] })) {
-          navigator.share({ files: [file] })
-        }
-      })
-  }
-
-  function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+  async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
-    const reader = new FileReader()
-    reader.onload = ev => {
-      if (ev.target?.result) goToEdit(ev.target.result as string)
+    try {
+      const src = await getResizedImageURL(file)
+      goToEdit(src)
+    } catch (err) {
+      console.error('Failed to load image', err)
     }
-    reader.readAsDataURL(file)
   }
 
-  function handleAddImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+  async function handleAddImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file || !fabricRef.current) return
     const fc = fabricRef.current as any
     const fabric = window.fabric
-    const reader = new FileReader()
-    reader.onload = ev => {
-      const src = ev.target?.result as string
-      if (!src) return
+    try {
+      const src = await getResizedImageURL(file)
       fabric.Image.fromURL(src, (img: any) => {
         img.scaleToWidth(fc.width / 2)
         img.set({ left: fc.width / 4, top: fc.height / 4 })
@@ -296,8 +491,9 @@ export function Editor() {
         fc.setActiveObject(img)
         fc.renderAll()
       })
+    } catch (err) {
+      console.error('Failed to add image', err)
     }
-    reader.readAsDataURL(file)
   }
 
   function openPicker() {
@@ -317,11 +513,9 @@ export function Editor() {
 
       {/* ── If no template chosen yet — show a "Choose Template" prompt in the canvas area ── */}
       {!selectedSrc ? (
-        <>
-          {/* Top bar — exit exits the editor page (go back to home via nav) */}
+        <div className="flex flex-col h-full bg-[#0e0e10]">
           <EditorTopBar
-            onExit={openPicker}
-            onAddImage={() => fileInputRef.current?.click()}
+            onAddImage={() => addImageInputRef.current?.click()}
             onChangeTemplate={openPicker}
           />
 
@@ -350,77 +544,134 @@ export function Editor() {
             <div className="w-[56px] ml-2" />
           </div>
 
-          {/* Disabled bottom actions */}
           <EditorBottomActions
-            hasSelected={false}
-            onAddText={() => {}}
-            onEditText={() => {}}
-            onDeleteSelected={() => {}}
-            onSendToBot={sendToBot}
-            onShare={shareImage}
-            onGenerateAI={() => {}}
+            onSave={() => {}}
           />
-        </>
+        </div>
       ) : (
         <>
           {/* ── Top bar ── */}
           <EditorTopBar
-            onExit={openPicker}
             onAddImage={() => addImageInputRef.current?.click()}
             onChangeTemplate={openPicker}
           />
 
           {/* ── Canvas + side toolbar (flex-1 fills all space between top and bottom) ── */}
-          <EditorCanvas
-            canvasKey={canvasKey}
-            canvasRef={canvasRef}
-            containerRef={containerRef}
-            isDrawingMode={isDrawingMode}
-            drawSettings={drawSettings}
-            onToggleDraw={toggleDraw}
-            onUpdateDrawSettings={updateDrawSettings}
-            onRotate={() => {
-              const fc = fabricRef.current as any
-              if (!fc) return
-              const bg = fc.backgroundImage
-              if (bg) {
-                if (bg.originX !== 'center' || bg.originY !== 'center') {
-                  bg.originX = 'center'
-                  bg.originY = 'center'
-                  bg.left = fc.width / 2
-                  bg.top = fc.height / 2
+          <div className="relative flex-1 flex flex-col min-h-0 min-w-0">
+            <EditorCanvas
+              canvasKey={canvasKey}
+              canvasRef={canvasRef}
+              containerRef={containerRef}
+              isDrawingMode={isDrawingMode}
+              drawSettings={drawSettings}
+              onToggleDraw={toggleDraw}
+              onUpdateDrawSettings={updateDrawSettings}
+              onRotate={() => {
+                const fc = fabricRef.current as any
+                const container = containerRef.current
+                if (!fc || !container) return
+                const bg = fc.backgroundImage
+                if (bg) {
+                  const currentAngle = (bg.angle || 0)
+                  const newAngle = (currentAngle + 90) % 360
+                  
+                  const isSideways = newAngle === 90 || newAngle === 270
+                  const rawW = bg.width
+                  const rawH = bg.height
+                  
+                  const activeW = isSideways ? rawH : rawW
+                  const activeH = isSideways ? rawW : rawH
+                  
+                  const maxW = Math.max(100, container.clientWidth - 16)
+                  const maxH = Math.max(100, container.clientHeight - 16)
+                  
+                  const scale = Math.min(maxW / activeW, maxH / activeH)
+                  const finalW = Math.round(activeW * scale)
+                  const finalH = Math.round(activeH * scale)
+                  
+                  const oldW = fc.width
+                  
+                  fc.setDimensions({ width: finalW, height: finalH })
+                  
+                  bg.set({
+                    angle: newAngle,
+                    scaleX: scale,
+                    scaleY: scale,
+                    originX: 'center',
+                    originY: 'center',
+                    left: finalW / 2,
+                    top: finalH / 2
+                  })
+                  
+                  const rescaleFactor = finalW / oldW
+                  fc.getObjects().forEach((o: any) => {
+                    o.left *= rescaleFactor
+                    o.top *= rescaleFactor
+                    o.scaleX = (o.scaleX || 1) * rescaleFactor
+                    o.scaleY = (o.scaleY || 1) * rescaleFactor
+                    o.setCoords()
+                  })
+                  
+                  fc.renderAll()
+                  saveHistory()
                 }
-                bg.angle = ((bg.angle || 0) + 90) % 360
-                fc.renderAll()
-              }
-            }}
-            onCrop={() => {
-              const fc = fabricRef.current as any
-              if (!fc) return
-              const bg = fc.backgroundImage
-              if (bg) {
-                if (bg.originX !== 'center' || bg.originY !== 'center') {
-                  bg.originX = 'center'
-                  bg.originY = 'center'
-                  bg.left = fc.width / 2
-                  bg.top = fc.height / 2
+              }}
+              onCrop={toggleCrop}
+              onToggleLayers={() => setShowLayersPanel(p => !p)}
+              onAddText={addText}
+              onEditText={() => {
+                if (isCropping) cancelCrop()
+                if (isDrawingMode) {
+                  setIsDrawingMode(false)
+                  const fc = fabricRef.current as any
+                  if (fc) fc.isDrawingMode = false
                 }
-                bg.scaleX *= 1.1
-                bg.scaleY *= 1.1
-                fc.renderAll()
-              }
-            }}
-          />
+                setShowEditPanel(true)
+              }}
+              onGenerateAI={() => {}}
+              hasSelected={hasSelected}
+              onUndo={undo}
+              onRedo={redo}
+              canUndo={canUndo}
+              canRedo={canRedo}
+            />
+
+            <LayersPanel
+              isOpen={showLayersPanel}
+              onClose={() => setShowLayersPanel(false)}
+              fabricRef={fabricRef}
+            />
+
+            {/* ── Cropping UI Overlay ── */}
+            <AnimatePresence>
+              {isCropping && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 20 }}
+                  className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-[#1c1c1e]/95 backdrop-blur-xl border border-white/10 rounded-full px-4 py-2 flex items-center gap-3 shadow-[0_8px_32px_rgba(0,0,0,0.5)] z-40"
+                >
+                  <button
+                    onClick={cancelCrop}
+                    className="text-white/60 hover:text-red-400 font-semibold text-[14px] px-3 py-1.5 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <div className="w-px h-5 bg-white/10" />
+                  <button
+                    onClick={confirmCrop}
+                    className="text-[#229ED9] hover:text-[#3ab4f0] font-bold text-[14px] px-3 py-1.5 transition-colors flex items-center gap-1.5"
+                  >
+                    Confirm Crop
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
 
           {/* ── Bottom actions ── */}
           <EditorBottomActions
-            hasSelected={hasSelected}
-            onAddText={addText}
-            onEditText={() => setShowEditPanel(true)}
-            onDeleteSelected={deleteSelected}
-            onSendToBot={sendToBot}
-            onShare={shareImage}
-            onGenerateAI={() => {}}
+            onSave={sendToBot}
           />
         </>
       )}
@@ -447,37 +698,36 @@ export function Editor() {
             transition={{ type: 'spring', damping: 32, stiffness: 320 }}
             className="absolute inset-0 bg-black z-50 flex flex-col"
           >
-            {/* ── Hero header — profile-page style ── */}
-            <div className="relative overflow-hidden pt-6 pb-8 text-center bg-[#151820]">
-              {/* Subtle gradient backdrop */}
-              <div
-                className="absolute inset-0 opacity-60"
-                style={{
-                  background: 'radial-gradient(ellipse 80% 60% at 50% 0%, rgba(34,158,217,0.25) 0%, transparent 70%)',
-                }}
-              />
-              <div className="relative z-10">
-                <h1 className="text-white font-bold text-[22px] mb-1">Meme Zone 🎭</h1>
-                <p className="text-white/40 text-[13px]">Pick a template or upload your own</p>
+            {/* ── Content sheet — matches profile page ── */}
+            <div className="bg-black relative z-10 flex-1 flex flex-col overflow-hidden mt-12 rounded-t-[28px] border-t border-white/10">
+              {/* Drag handle */}
+              <div className="w-10 h-1 bg-white/20 rounded-full mx-auto mt-4 mb-4 shrink-0" />
+              
+              {/* Header & Cancel */}
+              <div className="flex items-center justify-between px-5 mb-5">
+                <div>
+                  <h1 className="text-white font-bold text-[20px] mb-0.5">Meme Zone</h1>
+                  <p className="text-white/40 text-[12px]">Pick a template or upload your own</p>
+                </div>
+                <button
+                  onClick={() => setStep('edit')}
+                  className="px-3.5 py-1.5 rounded-[10px] bg-red-500/15 text-red-400 font-semibold text-[13px] border border-red-500/20 active:scale-[0.97] transition-all"
+                >
+                  Cancel
+                </button>
               </div>
 
               {/* Upload button */}
-              <div className="relative z-10 px-4 mt-5">
+              <div className="px-5 mb-4 shrink-0">
                 <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileUpload} />
                 <button
                   onClick={() => fileInputRef.current?.click()}
-                  className="w-full flex items-center justify-center gap-2 py-2.5 rounded-[14px] bg-white/8 border border-dashed border-white/20 text-white/70 hover:border-[#229ED9]/60 hover:text-[#229ED9] transition-all text-[13px] font-semibold"
+                  className="w-full flex items-center justify-center gap-2 py-3 rounded-[14px] bg-white/5 border border-dashed border-white/15 text-white/70 hover:border-[#229ED9]/60 hover:text-[#229ED9] transition-all text-[14px] font-semibold"
                 >
-                  <Upload size={16} />
+                  <Upload size={18} />
                   Upload from Gallery
                 </button>
               </div>
-            </div>
-
-            {/* ── Content sheet — matches profile page ── */}
-            <div className="bg-black -mt-3.5 rounded-t-[22px] relative z-10 flex-1 flex flex-col overflow-hidden">
-              {/* Drag handle */}
-              <div className="w-10 h-1 bg-white/20 rounded-full mx-auto mt-3 mb-4 shrink-0" />
 
               {/* Search */}
               <div className="px-4 mb-3 shrink-0">
@@ -577,14 +827,7 @@ export function Editor() {
 
               {/* Close picker — no template selected */}
               {!pickerSelectedSrc && (
-                <div className="px-4 pb-4 shrink-0">
-                  <button
-                    onClick={() => setStep('edit')}
-                    className="w-full py-3 rounded-[14px] bg-[#1c1c1e] border border-white/10 text-white/50 text-[14px] font-semibold"
-                  >
-                    Cancel
-                  </button>
-                </div>
+                <div className="h-4 shrink-0" />
               )}
             </div>
           </motion.div>
