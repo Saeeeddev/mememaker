@@ -285,7 +285,7 @@ export function Editor() {
 
   function onSel(e: { selected: SelectableObj[] }) {
     const obj = e.selected?.[0]
-    if (obj?.type === 'text') {
+    if (obj && (obj.type === 'text' || obj.type === 'i-text' || obj.type === 'textbox')) {
       setHasSelected(true)
       setTextEdit({
         text: obj.text ?? '',
@@ -294,6 +294,8 @@ export function Editor() {
         textColor: obj.fill ?? '#ffffff',
         strokeColor: obj.stroke ?? '#000000',
       })
+    } else {
+      setHasSelected(false)
     }
   }
 

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Eye, EyeOff, Lock, Unlock, Layers as LayersIcon, X } from 'lucide-react'
+import { Eye, EyeOff, Lock, Unlock, Layers as LayersIcon, X, ChevronUp, ChevronDown } from 'lucide-react'
 
 interface LayersPanelProps {
   isOpen: boolean
@@ -31,7 +31,7 @@ export function LayersPanel({ isOpen, onClose, fabricRef }: LayersPanelProps) {
 
     const newLayers: LayerItem[] = []
 
-    // Background Layer
+    // Background Layer at the top
     if (bgImage) {
       newLayers.push({
         id: 'bg',
@@ -48,14 +48,15 @@ export function LayersPanel({ isOpen, onClose, fabricRef }: LayersPanelProps) {
     // Canvas Objects (reversed to show top layers first)
     for (let i = objs.length - 1; i >= 0; i--) {
       const obj = objs[i]
-      if (obj.name === 'watermark') continue // Hide watermark
+      if (obj.name === 'watermark' || obj.name === 'cropRect') continue // Hide watermark & crop area
       
-      let name = obj.type === 'i-text' ? obj.text : (obj.type === 'path' ? 'Drawing' : 'Image')
+      const isText = obj.type && obj.type.toLowerCase().includes('text')
+      let name = isText ? obj.text : (obj.type === 'path' ? 'Drawing' : 'Image')
       if (name?.length > 15) name = name.substring(0, 15) + '...'
 
       newLayers.push({
         id: obj.id || `layer-${i}`,
-        name: name || 'Layer',
+        name: name || (isText ? 'Text' : 'Layer'),
         visible: obj.visible !== false,
         locked: !obj.selectable,
         type: obj.type,
@@ -106,8 +107,9 @@ export function LayersPanel({ isOpen, onClose, fabricRef }: LayersPanelProps) {
   const toggleLock = (layer: LayerItem, e: React.MouseEvent) => {
     e.stopPropagation()
     if (layer.isBackground) return
-    layer.obj.set({ selectable: !layer.locked, evented: !layer.locked })
-    if (!layer.obj.selectable && fabricRef.current?.getActiveObject() === layer.obj) {
+    const newSelectable = layer.locked // If it was locked, make it selectable (true).
+    layer.obj.set({ selectable: newSelectable, evented: newSelectable })
+    if (!newSelectable && fabricRef.current?.getActiveObject() === layer.obj) {
       fabricRef.current.discardActiveObject()
     }
     fabricRef.current?.renderAll()
@@ -118,6 +120,39 @@ export function LayersPanel({ isOpen, onClose, fabricRef }: LayersPanelProps) {
     if (layer.isBackground || layer.locked) return
     fabricRef.current?.setActiveObject(layer.obj)
     fabricRef.current?.renderAll()
+  }
+
+  const moveLayerUp = (layer: LayerItem, e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (layer.isBackground) return
+    const fc = fabricRef.current
+    if (!fc) return
+
+    fc.bringForward(layer.obj)
+    
+    // Ensure watermark stays on top
+    const objs = fc.getObjects()
+    for (const o of objs) {
+      if (o.name === 'watermark') {
+        fc.bringToFront(o)
+        break
+      }
+    }
+    
+    fc.renderAll()
+    refreshLayers()
+  }
+
+  const moveLayerDown = (layer: LayerItem, e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (layer.isBackground) return
+    const fc = fabricRef.current
+    if (!fc) return
+
+    fc.sendBackwards(layer.obj)
+    
+    fc.renderAll()
+    refreshLayers()
   }
 
   return (
@@ -138,9 +173,9 @@ export function LayersPanel({ isOpen, onClose, fabricRef }: LayersPanelProps) {
             </div>
             <button
               onClick={onClose}
-              className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-white/60 hover:bg-white/20 transition-colors"
+              className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white/20 transition-colors"
             >
-              <X size={12} />
+              <X size={16} strokeWidth={3} />
             </button>
           </div>
 
@@ -157,31 +192,52 @@ export function LayersPanel({ isOpen, onClose, fabricRef }: LayersPanelProps) {
                   }`}
                 >
                   <div className="flex items-center justify-between">
-                    <button
-                      onClick={(e) => toggleVisibility(layer, e)}
-                      className={`text-white/60 hover:text-white transition-colors ${layer.isBackground ? 'opacity-50 cursor-not-allowed' : ''}`}
-                      disabled={layer.isBackground}
-                    >
-                      {layer.visible ? <Eye size={16} /> : <EyeOff size={16} />}
-                    </button>
-                    
-                    <button
-                      onClick={(e) => toggleLock(layer, e)}
-                      className={`text-white/60 hover:text-white transition-colors ${layer.isBackground ? 'opacity-50 cursor-not-allowed' : ''}`}
-                      disabled={layer.isBackground}
-                    >
-                      {layer.locked ? <Lock size={16} /> : <Unlock size={16} />}
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={(e) => toggleVisibility(layer, e)}
+                        className={`text-white/60 hover:text-white transition-colors ${layer.isBackground ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        disabled={layer.isBackground}
+                      >
+                        {layer.visible ? <Eye size={16} /> : <EyeOff size={16} />}
+                      </button>
+                      
+                      <button
+                        onClick={(e) => toggleLock(layer, e)}
+                        className={`text-white/60 hover:text-white transition-colors ${layer.isBackground ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        disabled={layer.isBackground}
+                      >
+                        {layer.locked ? <Lock size={16} /> : <Unlock size={16} />}
+                      </button>
+                    </div>
+
+                    {!layer.isBackground && (
+                      <div className="flex items-center gap-1 bg-white/5 rounded-md p-0.5">
+                        <button
+                          onClick={(e) => moveLayerUp(layer, e)}
+                          className="text-white/40 hover:text-white hover:bg-white/10 p-1 rounded transition-colors"
+                          disabled={idx === 0}
+                        >
+                          <ChevronUp size={14} />
+                        </button>
+                        <button
+                          onClick={(e) => moveLayerDown(layer, e)}
+                          className="text-white/40 hover:text-white hover:bg-white/10 p-1 rounded transition-colors"
+                          disabled={idx === layers.length - (layers.some(l => l.isBackground) ? 2 : 1)}
+                        >
+                          <ChevronDown size={14} />
+                        </button>
+                      </div>
+                    )}
                   </div>
 
                   <div className="h-16 rounded-[8px] bg-black/40 border border-white/5 flex items-center justify-center overflow-hidden overflow-hidden relative">
                     <div className="absolute inset-0" style={{ backgroundImage: 'linear-gradient(45deg, #333 25%, transparent 25%), linear-gradient(-45deg, #333 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #333 75%), linear-gradient(-45deg, transparent 75%, #333 75%)', backgroundSize: '10px 10px', backgroundPosition: '0 0, 0 5px, 5px -5px, -5px 0px' }} />
                     {layer.preview ? (
                       <img src={layer.preview} className="w-full h-full object-contain relative z-10" alt={layer.name} />
-                    ) : layer.type === 'i-text' ? (
-                      <span className="text-white font-bold text-center text-sm relative z-10 p-1">{layer.name}</span>
+                    ) : layer.type?.toLowerCase().includes('text') ? (
+                      <span className="text-white font-bold text-center text-[13px] relative z-10 p-2 break-all line-clamp-2 leading-tight flex items-center justify-center h-full w-full">{layer.name}</span>
                     ) : (
-                      <span className="text-white/50 text-xs font-semibold relative z-10">{layer.name}</span>
+                      <span className="text-white/50 text-xs font-semibold relative z-10 flex items-center justify-center h-full w-full">{layer.name}</span>
                     )}
                   </div>
                   

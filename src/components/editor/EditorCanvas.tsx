@@ -142,9 +142,9 @@ export function EditorCanvas({
                 </div>
                 <button
                   onClick={() => setShowDrawSettings(false)}
-                  className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-white/60 hover:bg-white/20 transition-colors"
+                  className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white/20 transition-colors"
                 >
-                  <X size={12} />
+                  <X size={16} strokeWidth={3} />
                 </button>
               </div>
 
@@ -339,7 +339,9 @@ export function EditorCanvas({
           className="w-12 h-12 rounded-[14px] bg-[#1c1c1e] border border-white/10 flex flex-col items-center justify-center gap-0.5 text-white/60 hover:bg-[#252528] hover:text-white/90 hover:border-white/20 active:scale-[0.95] transition-all"
         >
           {hasSelected ? <Edit2 size={17} className="text-[#3b82f6]" /> : <Type size={17} />}
-          <span className="text-[8px] font-semibold tracking-wide text-white/40">Text</span>
+          <span className={`text-[8px] font-semibold tracking-wide ${hasSelected ? 'text-[#3b82f6]' : 'text-white/40'}`}>
+            {hasSelected ? 'Edit' : 'Text'}
+          </span>
         </button>
 
         {/* AI Generate button */}
