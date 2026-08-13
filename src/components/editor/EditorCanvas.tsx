@@ -243,6 +243,7 @@ export function useFabricCanvas({
   onSelectionCreated,
   onSelectionCleared,
   onSaveHistory,
+  onEditText,
 }: {
   step: string
   canvasKey: number
@@ -254,11 +255,14 @@ export function useFabricCanvas({
   onSelectionCreated: (e: { selected: SelectableObj[] }) => void
   onSelectionCleared: () => void
   onSaveHistory?: () => void
+  onEditText?: () => void
 }) {
   const onSelRef = useRef(onSelectionCreated)
   onSelRef.current = onSelectionCreated
   const onClearRef = useRef(onSelectionCleared)
   onClearRef.current = onSelectionCleared
+  const onEditRef = useRef(onEditText)
+  onEditRef.current = onEditText
 
   useEffect(() => {
     if (step !== 'edit' || !selectedSrc) return
@@ -286,10 +290,12 @@ export function useFabricCanvas({
         const deleteSvg = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%23333" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`
         const rotateSvg = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%23333" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>`
         const scaleSvg = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%23333" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"></path><path d="M9 21H3v-6"></path><path d="M21 3l-7 7"></path><path d="M3 21l7-7"></path></svg>`
+        const editSvg = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%23333" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>`
 
         const deleteImg = new Image(); deleteImg.src = deleteSvg
         const rotateImg = new Image(); rotateImg.src = rotateSvg
         const scaleImg = new Image(); scaleImg.src = scaleSvg
+        const editImg = new Image(); editImg.src = editSvg
 
         function renderIcon(icon: HTMLImageElement) {
           return function(this: any, ctx: CanvasRenderingContext2D, left: number, top: number) {
@@ -373,7 +379,21 @@ export function useFabricCanvas({
           })
         }
         
-        delete customControls.bl
+        customControls.bl = new fabric.Control({
+          x: -0.5,
+          y: 0.5,
+          render: renderIcon(editImg),
+          actionHandler: () => false,
+          mouseUpHandler: (_eventData: any, transform: any) => {
+            const target = transform.target
+            if (target.type === 'textbox' || target.type === 'i-text' || target.type === 'text') {
+              target.canvas.fire('custom:edit_clicked', { target })
+            }
+            return true
+          },
+          cursorStyle: 'pointer'
+        })
+        
         delete customControls.mtr
         
         ;['mt', 'mb', 'ml', 'mr'].forEach(c => {
@@ -473,6 +493,9 @@ export function useFabricCanvas({
       fc.on('selection:created', (e: any) => onSelRef.current(e))
       fc.on('selection:updated', (e: any) => onSelRef.current(e))
       fc.on('selection:cleared', () => onClearRef.current())
+      fc.on('custom:edit_clicked', () => {
+        if (onEditRef.current) onEditRef.current()
+      })
 
       fc.on('path:created', (e: any) => {
         if (e.path) {

@@ -23,7 +23,7 @@ export function AIPanel({ open, templateId, onApply, onClose }: AIPanelProps) {
     try {
       const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
       if (!apiKey) {
-        setError('Gemini API key is missing. Please add VITE_GEMINI_API_KEY to your .env file.');
+        setError('AI generation is currently unavailable. Please try again later.');
         setIsLoading(false);
         return;
       }

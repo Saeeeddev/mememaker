@@ -315,6 +315,7 @@ export function Editor() {
         cornerStrokeColor: '#ffffff',
         borderColor: '#229ED9',
         transparentCorners: false,
+        editable: false,
         name: `text-${Date.now()}-${index}`,
       })
       fc.add(textObj)
@@ -378,6 +379,7 @@ export function Editor() {
       setShowEditPanel(false)
     },
     onSaveHistory: saveHistory,
+    onEditText: () => setShowEditPanel(true),
   })
 
   function onSel(e: { selected: SelectableObj[] }) {
@@ -417,6 +419,7 @@ export function Editor() {
       originX: 'center',
       originY: 'center',
       paintFirst: 'stroke',
+      editable: false,
     })
     fc.add(text)
     fc.setActiveObject(text)
