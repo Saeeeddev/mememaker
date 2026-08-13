@@ -4,20 +4,10 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Sparkles, Loader2 } from 'lucide-react'
 import { GoogleGenAI, Type } from '@google/genai'
 
-export interface AITextConfig {
-  text: string;
-  topPercent: number;
-  leftPercent: number;
-  widthPercent: number;
-  fontSizePercent: number;
-  color: string;
-  strokeColor: string;
-}
-
 interface AIPanelProps {
   open: boolean
   templateId: string | null
-  onApply: (texts: AITextConfig[]) => void
+  onApply: (texts: string[]) => void
   onClose: () => void
 }
 
@@ -40,30 +30,20 @@ export function AIPanel({ open, templateId, onApply, onClose }: AIPanelProps) {
 
       const ai = new GoogleGenAI({ apiKey });
 
+      const cleanTemplateId = (templateId || 'Unknown Meme').replace(/-/g, ' ');
+      
       const response = await ai.models.generateContent({
         model: 'gemini-3.5-flash',
-        contents: `Template Name/ID: ${templateId || 'Unknown Meme'}\nUser Request: ${prompt}`,
+        contents: `Template: ${cleanTemplateId}\nSubject: ${prompt}`,
         config: {
-          systemInstruction: "You are an expert meme creator. You know the exact visual layout of every meme template. Generate funny, relevant, and CONCISE (short) text. CRITICAL RULE: Use your knowledge of the template to determine exactly how many text boxes it requires. For EACH text box, you MUST specify its exact center position (topPercent, leftPercent), its width (widthPercent), its font size relative to canvas width (fontSizePercent, usually 8-15), and appropriate hex colors.",
+          systemInstruction: "You are an expert meme generator. You MUST combine the provided Template with the User's Subject.\n\nRULES:\n1. UNDERSTAND THE TEMPLATE: Use your internet culture knowledge to know the exact format, joke structure, and exact number of text boxes required for the requested Template.\n2. APPLY THE SUBJECT: Write the meme strictly about the User's Subject, forcing it to fit the template's joke structure perfectly.\n3. KEEP IT EXTREMELY SHORT: Meme text must be punchy and large. NEVER exceed 8 words per text box! The shorter, the better.\n4. OUTPUT: Output an array of strings in order from top to bottom.",
           responseMimeType: "application/json",
           responseSchema: {
             type: Type.OBJECT,
             properties: {
               texts: {
                 type: Type.ARRAY,
-                items: {
-                  type: Type.OBJECT,
-                  properties: {
-                    text: { type: Type.STRING },
-                    topPercent: { type: Type.NUMBER, description: "Y center position from 0 to 100" },
-                    leftPercent: { type: Type.NUMBER, description: "X center position from 0 to 100" },
-                    widthPercent: { type: Type.NUMBER, description: "Width of text box from 10 to 100" },
-                    fontSizePercent: { type: Type.NUMBER, description: "Font size relative to canvas width (e.g. 10)" },
-                    color: { type: Type.STRING, description: "Hex color (usually #ffffff or #000000)" },
-                    strokeColor: { type: Type.STRING, description: "Hex color for text outline" }
-                  },
-                  required: ["text", "topPercent", "leftPercent", "widthPercent", "fontSizePercent", "color", "strokeColor"]
-                }
+                items: { type: Type.STRING }
               }
             },
             required: ["texts"]

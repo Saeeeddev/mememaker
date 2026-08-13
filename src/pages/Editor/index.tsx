@@ -14,7 +14,6 @@ import {
   type MemeTemplate,
   type TextEditState,
   type SelectableObj,
-  type AITextConfig
 } from '@components/editor'
 
 const DRAW_COLORS = [
@@ -282,32 +281,35 @@ export function Editor() {
   }, [saveHistory])
 
   // ── AI Generate Implementation ──
-  const handleAIGenerate = useCallback((texts: AITextConfig[]) => {
+  const handleAIGenerate = useCallback((texts: string[]) => {
     const fc = fabricRef.current as any
     const fabric = window.fabric
     if (!fc || !fabric || !texts || texts.length === 0) return
 
     saveHistory()
 
-    texts.forEach((conf, index) => {
-      const yPos = (Math.max(5, Math.min(95, conf.topPercent)) / 100) * fc.height;
-      const xPos = (Math.max(5, Math.min(95, conf.leftPercent)) / 100) * fc.width;
-      const boxWidth = (Math.max(10, Math.min(100, conf.widthPercent)) / 100) * fc.width;
-      
-      // Minimum font size 10, max 60 based on width
-      const calculatedFontSize = Math.max(10, Math.min(60, (conf.fontSizePercent / 100) * fc.width));
+    // Remove all existing text objects so the new AI generation is clean
+    const existingObjects = fc.getObjects()
+    existingObjects.forEach((obj: any) => {
+      if (obj.type === 'textbox' || obj.type === 'i-text' || obj.type === 'text') {
+        fc.remove(obj)
+      }
+    })
 
-      const textObj = new fabric.Textbox(conf.text.toUpperCase(), {
-        left: xPos,
+    const createText = (text: string, yPos: number, originY: 'top' | 'bottom' | 'center', index: number) => {
+      const maxW = fc.height > fc.width ? fc.width * 0.9 : fc.width * 0.96;
+      
+      const textObj = new fabric.Textbox(text.toUpperCase(), {
+        left: fc.width / 2,
         top: yPos,
-        width: boxWidth,
+        width: maxW,
         fontFamily: 'Impact',
-        fontSize: calculatedFontSize,
-        fill: conf.color || '#ffffff',
-        stroke: conf.strokeColor || '#000000',
+        fontSize: Math.min(fc.width * 0.12, 45), // Responsive font size
+        fill: '#ffffff',
+        stroke: '#000000',
         strokeWidth: 2,
         originX: 'center',
-        originY: 'center',
+        originY: originY,
         textAlign: 'center',
         cornerColor: '#229ED9',
         cornerStrokeColor: '#ffffff',
@@ -316,7 +318,25 @@ export function Editor() {
         name: `text-${Date.now()}-${index}`,
       })
       fc.add(textObj)
-    });
+    }
+
+    if (texts.length === 1) {
+      createText(texts[0], fc.height * 0.5, 'center', 0)
+    } else if (texts.length === 2) {
+      createText(texts[0], fc.height * 0.05, 'top', 0)
+      createText(texts[1], fc.height * 0.95, 'bottom', 1)
+    } else {
+      // For 3+ texts, space them out evenly
+      const spacing = 0.9 / (texts.length - 1);
+      texts.forEach((text, index) => {
+        let originY: 'top' | 'center' | 'bottom' = 'center';
+        if (index === 0) originY = 'top';
+        else if (index === texts.length - 1) originY = 'bottom';
+
+        const yPos = fc.height * (0.05 + (index * spacing));
+        createText(text, yPos, originY, index);
+      });
+    }
 
     fc.renderAll()
     setShowAIPanel(false)
