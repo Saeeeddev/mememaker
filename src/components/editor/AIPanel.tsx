@@ -22,14 +22,13 @@ export function AIPanel({ open, templateId, templateImageUrl, onApply, onClose }
     setIsLoading(true)
     setError(null)
     try {
-      const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-      if (!apiKey) {
+      const apiKeyString = import.meta.env.VITE_GEMINI_API_KEY;
+      if (!apiKeyString) {
         setError('AI generation is currently unavailable. Please try again later.');
         setIsLoading(false);
         return;
       }
-
-      const ai = new GoogleGenAI({ apiKey });
+      const apiKeys = apiKeyString.split(',').map((k: string) => k.trim()).filter(Boolean);
 
       const cleanTemplateId = (templateId || 'Unknown Meme').replace(/-/g, ' ');
       
@@ -59,50 +58,83 @@ export function AIPanel({ open, templateId, templateImageUrl, onApply, onClose }
       if (imagePart) contents.push(imagePart);
       contents.push(`Template: ${cleanTemplateId}\nSubject: ${prompt}`);
 
-      const response = await ai.models.generateContent({
-        model: 'gemini-3.5-flash',
-        contents: contents as any,
-        config: {
-          systemInstruction: "You are an expert meme generator. You MUST combine the provided Template with the User's Subject.\n\nRULES:\n1. OBSERVE THE TEMPLATE: Look at the provided image. Find the natural blank spaces or intended text areas where text should go.\n2. THE JOKE: Write a FULL, funny joke that fits the template's structure based on the User's Subject. Keep it punchy (max 8 words per text box).\n3. PLACEMENT: For each text box, provide the x_percent and y_percent coordinates (0-100) of its center point relative to the image dimensions.\n4. STYLING: Suggest a font_size (15-35, default 25), text_color (hex, default #ffffff), and stroke_color (hex, default #000000). Use contrasting colors so text is readable against the image background at that location!\n5. OUTPUT: Output an array of objects.",
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: Type.OBJECT,
-            properties: {
-              texts: {
-                type: Type.ARRAY,
-                items: {
-                  type: Type.OBJECT,
-                  properties: {
-                    text: { type: Type.STRING },
-                    x_percent: { type: Type.NUMBER, description: "0-100 x coordinate for text center" },
-                    y_percent: { type: Type.NUMBER, description: "0-100 y coordinate for text center" },
-                    font_size: { type: Type.NUMBER, description: "Integer between 15 and 35" },
-                    text_color: { type: Type.STRING, description: "Hex color code e.g. #ffffff" },
-                    stroke_color: { type: Type.STRING, description: "Hex color code e.g. #000000" }
-                  },
-                  required: ["text", "x_percent", "y_percent", "font_size", "text_color", "stroke_color"]
-                }
+      let responseText = null;
+      let lastError = null;
+
+      for (let i = 0; i < apiKeys.length; i++) {
+        const apiKey = apiKeys[i];
+        const ai = new GoogleGenAI({ apiKey });
+        
+        try {
+          const response = await ai.models.generateContent({
+            model: 'gemini-3.5-flash',
+            contents: contents as any,
+            config: {
+              systemInstruction: "You are an expert meme generator. You MUST combine the provided Template with the User's Subject.\n\nRULES:\n1. OBSERVE THE TEMPLATE: Look at the provided image. Find the natural blank spaces or intended text areas where text should go.\n2. THE JOKE: Write a FULL, funny joke that fits the template's structure based on the User's Subject. Keep it punchy (max 8 words per text box).\n3. PLACEMENT: For each text box, provide the x_percent and y_percent coordinates (0-100) of its center point relative to the image dimensions.\n4. STYLING: Suggest a font_size (15-35, default 25), text_color (hex, default #ffffff), and stroke_color (hex, default #000000). Use contrasting colors so text is readable against the image background at that location!\n5. OUTPUT: Output an array of objects.",
+              responseMimeType: "application/json",
+              responseSchema: {
+                type: Type.OBJECT,
+                properties: {
+                  texts: {
+                    type: Type.ARRAY,
+                    items: {
+                      type: Type.OBJECT,
+                      properties: {
+                        text: { type: Type.STRING },
+                        x_percent: { type: Type.NUMBER, description: "0-100 x coordinate for text center" },
+                        y_percent: { type: Type.NUMBER, description: "0-100 y coordinate for text center" },
+                        font_size: { type: Type.NUMBER, description: "Integer between 15 and 35" },
+                        text_color: { type: Type.STRING, description: "Hex color code e.g. #ffffff" },
+                        stroke_color: { type: Type.STRING, description: "Hex color code e.g. #000000" }
+                      },
+                      required: ["text", "x_percent", "y_percent", "font_size", "text_color", "stroke_color"]
+                    }
+                  }
+                },
+                required: ["texts"]
               }
-            },
-            required: ["texts"]
+            }
+          });
+          
+          if (response.text) {
+            responseText = response.text;
+            break; // Success, exit loop
+          }
+        } catch (err: any) {
+          lastError = err;
+          const errMsg = err?.message?.toLowerCase() || '';
+          if (errMsg.includes('429') || errMsg.includes('quota') || errMsg.includes('rate limit') || errMsg.includes('exhausted')) {
+            console.warn(`API Key ${i + 1} rate limited. Switching to next key if available...`);
+            continue;
+          } else {
+            break; // Non-rate limit error, stop trying
           }
         }
-      });
+      }
 
-      if (response.text) {
-        const result = JSON.parse(response.text);
+      if (responseText) {
+        const result = JSON.parse(responseText);
         if (result.texts && Array.isArray(result.texts)) {
           onApply(result.texts);
           setPrompt('');
         } else {
           setError('Failed to generate text correctly. Try again.');
         }
+      } else if (lastError) {
+        const err = lastError as any;
+        console.error(err);
+        const errMsg = err?.message?.toLowerCase() || '';
+        if (errMsg.includes('429') || errMsg.includes('quota') || errMsg.includes('rate limit') || errMsg.includes('exhausted')) {
+          setError('All API keys are exhausted! Please wait 15 seconds and try again.');
+        } else {
+          setError('Generation failed. Ensure your words are appropriate, or check your API key.');
+        }
       } else {
         setError('No response from AI.');
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      setError('Generation failed. Ensure your words are appropriate, or check your API key.');
+      setError('An unexpected error occurred.');
     } finally {
       setIsLoading(false)
     }

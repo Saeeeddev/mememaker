@@ -298,7 +298,7 @@ export function Editor() {
 
     const createText = (item: {text: string, x_percent: number, y_percent: number, font_size?: number, text_color?: string, stroke_color?: string}, index: number) => {
       const maxW = fc.height > fc.width ? fc.width * 0.9 : fc.width * 0.96;
-      
+
       const xPos = fc.width * (item.x_percent / 100);
       const yPos = fc.height * (item.y_percent / 100);
       
@@ -308,11 +308,29 @@ export function Editor() {
       
       // Dynamic stroke width (about 1/15th of the font size, min 1px)
       const dynamicStrokeWidth = Math.max(1, calcFontSize / 15);
+
+      // Measure the natural width of the text to prevent huge padding on short sentences
+      const tempText = new fabric.Text(item.text.toUpperCase(), {
+        fontFamily: 'Arial',
+        fontSize: calcFontSize,
+        fontWeight: 'bold',
+      });
+      const finalWidth = Math.min(tempText.width || maxW, maxW);
+      const textHeight = tempText.height || (calcFontSize * 1.2);
+      
+      // Clamp coordinates so the text cannot spill outside the canvas frame
+      const minX = finalWidth / 2;
+      const maxX = fc.width - (finalWidth / 2);
+      const safeXPos = Math.max(minX, Math.min(xPos, maxX));
+      
+      const minY = textHeight / 2;
+      const maxY = fc.height - (textHeight / 2);
+      const safeYPos = Math.max(minY, Math.min(yPos, maxY));
       
       const textObj = new fabric.Textbox(item.text.toUpperCase(), {
-        left: xPos,
-        top: yPos,
-        width: maxW,
+        left: safeXPos,
+        top: safeYPos,
+        width: finalWidth,
         fontFamily: 'Arial',
         fontSize: calcFontSize,
         fontWeight: 'bold',
