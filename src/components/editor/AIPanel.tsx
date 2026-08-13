@@ -2,11 +2,22 @@ import { useState } from 'react'
 import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Sparkles, Loader2 } from 'lucide-react'
+import { GoogleGenAI, Type } from '@google/genai'
+
+export interface AITextConfig {
+  text: string;
+  topPercent: number;
+  leftPercent: number;
+  widthPercent: number;
+  fontSizePercent: number;
+  color: string;
+  strokeColor: string;
+}
 
 interface AIPanelProps {
   open: boolean
   templateId: string | null
-  onApply: (topText: string, bottomText: string) => void
+  onApply: (texts: AITextConfig[]) => void
   onClose: () => void
 }
 
@@ -20,26 +31,60 @@ export function AIPanel({ open, templateId, onApply, onClose }: AIPanelProps) {
     setIsLoading(true)
     setError(null)
     try {
-      // Keep rules extremely short to fit in 300 char limit!
-      const userPrompt = prompt.trim().substring(0, 200)
-      const prefix = templateId ? `Meme: "${templateId}". Subject: ` : 'Subject: '
-      const suffix = templateId ? ` (Rule: If 1-text meme, leave bottom_text empty)` : ''
-      const finalPrompt = `${prefix}${userPrompt}${suffix}`
+      const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+      if (!apiKey) {
+        setError('Gemini API key is missing. Please add VITE_GEMINI_API_KEY to your .env file.');
+        setIsLoading(false);
+        return;
+      }
 
-      const res = await fetch('https://justmeme.wtf/api/v1/ai-generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: finalPrompt })
-      })
-      const data = await res.json()
-      if (data.success && typeof data.top_text === 'string' && typeof data.bottom_text === 'string') {
-        onApply(data.top_text, data.bottom_text)
-        setPrompt('')
+      const ai = new GoogleGenAI({ apiKey });
+
+      const response = await ai.models.generateContent({
+        model: 'gemini-3.5-flash',
+        contents: `Template Name/ID: ${templateId || 'Unknown Meme'}\nUser Request: ${prompt}`,
+        config: {
+          systemInstruction: "You are an expert meme creator. You know the exact visual layout of every meme template. Generate funny, relevant, and CONCISE (short) text. CRITICAL RULE: Use your knowledge of the template to determine exactly how many text boxes it requires. For EACH text box, you MUST specify its exact center position (topPercent, leftPercent), its width (widthPercent), its font size relative to canvas width (fontSizePercent, usually 8-15), and appropriate hex colors.",
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              texts: {
+                type: Type.ARRAY,
+                items: {
+                  type: Type.OBJECT,
+                  properties: {
+                    text: { type: Type.STRING },
+                    topPercent: { type: Type.NUMBER, description: "Y center position from 0 to 100" },
+                    leftPercent: { type: Type.NUMBER, description: "X center position from 0 to 100" },
+                    widthPercent: { type: Type.NUMBER, description: "Width of text box from 10 to 100" },
+                    fontSizePercent: { type: Type.NUMBER, description: "Font size relative to canvas width (e.g. 10)" },
+                    color: { type: Type.STRING, description: "Hex color (usually #ffffff or #000000)" },
+                    strokeColor: { type: Type.STRING, description: "Hex color for text outline" }
+                  },
+                  required: ["text", "topPercent", "leftPercent", "widthPercent", "fontSizePercent", "color", "strokeColor"]
+                }
+              }
+            },
+            required: ["texts"]
+          }
+        }
+      });
+
+      if (response.text) {
+        const result = JSON.parse(response.text);
+        if (result.texts && Array.isArray(result.texts)) {
+          onApply(result.texts);
+          setPrompt('');
+        } else {
+          setError('Failed to generate text correctly. Try again.');
+        }
       } else {
-        setError(data.error || 'Failed to generate text. Ensure your words are appropriate and try again.')
+        setError('No response from AI.');
       }
     } catch (err) {
-      setError('Generation failed. Maybe your words are not appropriate, or there is a network issue.')
+      console.error(err);
+      setError('Generation failed. Ensure your words are appropriate, or check your API key.');
     } finally {
       setIsLoading(false)
     }

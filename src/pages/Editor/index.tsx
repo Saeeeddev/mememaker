@@ -14,6 +14,7 @@ import {
   type MemeTemplate,
   type TextEditState,
   type SelectableObj,
+  type AITextConfig
 } from '@components/editor'
 
 const DRAW_COLORS = [
@@ -281,47 +282,41 @@ export function Editor() {
   }, [saveHistory])
 
   // ── AI Generate Implementation ──
-  const handleAIGenerate = useCallback((topText: string, bottomText: string) => {
+  const handleAIGenerate = useCallback((texts: AITextConfig[]) => {
     const fc = fabricRef.current as any
     const fabric = window.fabric
-    if (!fc || !fabric) return
+    if (!fc || !fabric || !texts || texts.length === 0) return
 
     saveHistory()
 
-    const createText = (text: string, yPos: number, isTop: boolean, originY: 'top' | 'bottom' | 'center') => {
-      const maxW = fc.width * 0.96;
+    texts.forEach((conf, index) => {
+      const yPos = (Math.max(5, Math.min(95, conf.topPercent)) / 100) * fc.height;
+      const xPos = (Math.max(5, Math.min(95, conf.leftPercent)) / 100) * fc.width;
+      const boxWidth = (Math.max(10, Math.min(100, conf.widthPercent)) / 100) * fc.width;
       
-      const textObj = new fabric.Textbox(text.toUpperCase(), {
-        left: fc.width / 2,
+      // Minimum font size 10, max 60 based on width
+      const calculatedFontSize = Math.max(10, Math.min(60, (conf.fontSizePercent / 100) * fc.width));
+
+      const textObj = new fabric.Textbox(conf.text.toUpperCase(), {
+        left: xPos,
         top: yPos,
-        width: maxW,
+        width: boxWidth,
         fontFamily: 'Impact',
-        fontSize: Math.min(fc.width * 0.12, 45), // Responsive font size
-        fill: '#ffffff',
-        stroke: '#000000',
+        fontSize: calculatedFontSize,
+        fill: conf.color || '#ffffff',
+        stroke: conf.strokeColor || '#000000',
         strokeWidth: 2,
         originX: 'center',
-        originY: originY,
+        originY: 'center',
         textAlign: 'center',
         cornerColor: '#229ED9',
         cornerStrokeColor: '#ffffff',
         borderColor: '#229ED9',
         transparentCorners: false,
-        name: `text-${Date.now()}-${isTop ? 'top' : 'bottom'}`,
+        name: `text-${Date.now()}-${index}`,
       })
       fc.add(textObj)
-    }
-
-    if (topText && bottomText) {
-      // Standard two-text meme
-      createText(topText, fc.height * 0.05, true, 'top')
-      createText(bottomText, fc.height * 0.95, false, 'bottom')
-    } else if (topText && !bottomText) {
-      // One-text meme, start it in the center so the user can easily drag it into position (e.g. a sign)
-      createText(topText, fc.height * 0.5, true, 'center')
-    } else if (!topText && bottomText) {
-      createText(bottomText, fc.height * 0.5, false, 'center')
-    }
+    });
 
     fc.renderAll()
     setShowAIPanel(false)
