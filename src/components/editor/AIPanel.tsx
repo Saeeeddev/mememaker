@@ -43,10 +43,14 @@ export function AIPanel({ open, templateId, templateImageUrl, onApply, onClose }
             reader.onloadend = () => resolve(reader.result as string);
           });
           const base64Data = base64.split(',')[1];
+          let mimeType = blob.type;
+          if (!mimeType || mimeType === 'application/octet-stream') {
+            mimeType = templateImageUrl.toLowerCase().endsWith('.png') ? 'image/png' : 'image/jpeg';
+          }
           imagePart = {
             inlineData: {
               data: base64Data,
-              mimeType: blob.type
+              mimeType: mimeType
             }
           };
         } catch (e) {
@@ -123,11 +127,11 @@ export function AIPanel({ open, templateId, templateImageUrl, onApply, onClose }
       } else if (lastError) {
         const err = lastError as any;
         console.error(err);
-        const errMsg = err?.message?.toLowerCase() || '';
-        if (errMsg.includes('429') || errMsg.includes('quota') || errMsg.includes('rate limit') || errMsg.includes('exhausted')) {
+        const errMsg = err?.message || 'Unknown error';
+        if (errMsg.toLowerCase().includes('429') || errMsg.toLowerCase().includes('quota') || errMsg.toLowerCase().includes('rate limit') || errMsg.toLowerCase().includes('exhausted')) {
           setError('All API keys are exhausted! Please wait 15 seconds and try again.');
         } else {
-          setError('Generation failed. Ensure your words are appropriate, or check your API key.');
+          setError(`Generation failed: ${errMsg}. Please check your API key or input.`);
         }
       } else {
         setError('No response from AI.');

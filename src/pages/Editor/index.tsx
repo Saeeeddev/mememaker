@@ -306,9 +306,6 @@ export function Editor() {
       const aiFontSize = item.font_size || 25;
       const calcFontSize = (aiFontSize / 400) * fc.width;
       
-      // Dynamic stroke width (about 1/15th of the font size, min 1px)
-      const dynamicStrokeWidth = Math.max(1, calcFontSize / 15);
-
       // Measure the natural width of the text to prevent huge padding on short sentences
       const tempText = new fabric.Text(item.text.toUpperCase(), {
         fontFamily: 'Arial',
@@ -334,9 +331,9 @@ export function Editor() {
         fontFamily: 'Arial',
         fontSize: calcFontSize,
         fontWeight: 'bold',
-        fill: item.text_color || '#ffffff',
-        stroke: item.stroke_color || '#000000',
-        strokeWidth: dynamicStrokeWidth,
+        fill: '#ffffff',
+        stroke: '#000000',
+        strokeWidth: 0.5,
         originX: 'center',
         originY: 'center',
         textAlign: 'center',
