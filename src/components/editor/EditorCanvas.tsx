@@ -1,6 +1,5 @@
-import { useRef, useEffect, useState } from 'react'
-import { RotateCw, Crop, Pencil, X, Minus, Plus, Layers as LayersIcon, Type, Sparkles, Maximize, Edit2, Undo2, Redo2, Trash2 } from 'lucide-react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { useRef, useEffect } from 'react'
+import { RotateCw, Crop, Pencil, Layers as LayersIcon, Type, Sparkles, Maximize, Edit2, Undo2, Redo2 } from 'lucide-react'
 
 /* Fabric loaded via CDN in index.html */
 declare global {
@@ -30,9 +29,7 @@ interface EditorCanvasProps {
   canvasRef: React.RefObject<HTMLCanvasElement | null>
   containerRef: React.RefObject<HTMLDivElement | null>
   isDrawingMode: boolean
-  drawSettings: DrawSettings
   onToggleDraw: () => void
-  onUpdateDrawSettings: (patch: Partial<DrawSettings>) => void
   onRotate?: () => void
   onCrop?: () => void
   onToggleLayers?: () => void
@@ -42,7 +39,6 @@ interface EditorCanvasProps {
   hasSelected?: boolean
   onUndo?: () => void
   onRedo?: () => void
-  onClearDrawings?: () => void
   canUndo?: boolean
   canRedo?: boolean
   isFullScreen?: boolean
@@ -82,9 +78,7 @@ export function EditorCanvas({
   canvasRef,
   containerRef,
   isDrawingMode,
-  drawSettings,
   onToggleDraw,
-  onUpdateDrawSettings,
   onRotate,
   onCrop,
   onToggleLayers,
@@ -96,7 +90,6 @@ export function EditorCanvas({
   onRedo,
   canUndo,
   canRedo,
-  onClearDrawings,
   isFullScreen,
   onToggleFullScreen,
 }: EditorCanvasProps) {

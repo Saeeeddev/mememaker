@@ -792,9 +792,7 @@ export function Editor() {
               canvasRef={canvasRef}
               containerRef={containerRef}
               isDrawingMode={isDrawingMode}
-              drawSettings={drawSettings}
               onToggleDraw={toggleDraw}
-              onUpdateDrawSettings={updateDrawSettings}
               onRotate={handleRotate}
               onCrop={toggleCrop}
               onToggleLayers={() => setShowLayersPanel(p => !p)}
@@ -815,7 +813,6 @@ export function Editor() {
               hasSelected={hasSelected}
               onUndo={undo}
               onRedo={redo}
-              onClearDrawings={handleClearDrawings}
               canUndo={canUndo}
               canRedo={canRedo}
             />
@@ -1015,7 +1012,7 @@ export function Editor() {
                   {DRAW_COLORS.map(c => (
                     <button
                       key={c}
-                      onClick={() => setDrawSettings(prev => ({ ...prev, color: c }))}
+                      onClick={() => updateDrawSettings({ color: c })}
                       className={`w-7 h-7 rounded-full border-2 transition-all active:scale-90 ${
                         drawSettings.color === c
                           ? 'border-white scale-110 shadow-lg'
@@ -1035,7 +1032,7 @@ export function Editor() {
                     <input
                       type="color"
                       value={drawSettings.color}
-                      onChange={e => setDrawSettings(prev => ({ ...prev, color: e.target.value }))}
+                      onChange={e => updateDrawSettings({ color: e.target.value })}
                       className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
                     />
                   </div>
@@ -1061,7 +1058,7 @@ export function Editor() {
                 </div>
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={() => setDrawSettings(prev => ({ ...prev, width: Math.max(1, prev.width - 2) }))}
+                    onClick={() => updateDrawSettings({ width: Math.max(1, drawSettings.width - 2) })}
                     className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-white/60 hover:bg-white/20 transition-colors shrink-0"
                   >
                     <Minus size={10} />
@@ -1071,11 +1068,11 @@ export function Editor() {
                     min={1}
                     max={50}
                     value={drawSettings.width}
-                    onChange={e => setDrawSettings(prev => ({ ...prev, width: parseInt(e.target.value) }))}
+                    onChange={e => updateDrawSettings({ width: parseInt(e.target.value) })}
                     className="flex-1 accent-[#229ED9]"
                   />
                   <button
-                    onClick={() => setDrawSettings(prev => ({ ...prev, width: Math.min(50, prev.width + 2) }))}
+                    onClick={() => updateDrawSettings({ width: Math.min(50, drawSettings.width + 2) })}
                     className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-white/60 hover:bg-white/20 transition-colors shrink-0"
                   >
                     <Plus size={10} />
@@ -1094,7 +1091,7 @@ export function Editor() {
                   min={10}
                   max={100}
                   value={Math.round(drawSettings.opacity * 100)}
-                  onChange={e => setDrawSettings(prev => ({ ...prev, opacity: parseInt(e.target.value) / 100 }))}
+                  onChange={e => updateDrawSettings({ opacity: parseInt(e.target.value) / 100 })}
                   className="w-full accent-[#229ED9]"
                 />
               </div>
