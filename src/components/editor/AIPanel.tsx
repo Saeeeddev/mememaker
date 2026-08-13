@@ -20,9 +20,11 @@ export function AIPanel({ open, templateId, onApply, onClose }: AIPanelProps) {
     setIsLoading(true)
     setError(null)
     try {
-      const templatePrefix = templateId ? `Write a funny meme text for the "${templateId}" meme template. Subject: ` : ''
-      const formattingRule = ` IMPORTANT: Match the exact standard format of this specific meme template! If this specific template typically only uses ONE text (like a sign, a single caption, or a book), put ALL the text in top_text and leave bottom_text completely empty! Do not use bottom_text if the meme format doesn't need it.`
-      const finalPrompt = `${templatePrefix}${prompt}${templateId ? formattingRule : ''}`
+      // Keep rules extremely short to fit in 300 char limit!
+      const userPrompt = prompt.trim().substring(0, 200)
+      const prefix = templateId ? `Meme: "${templateId}". Subject: ` : 'Subject: '
+      const suffix = templateId ? ` (Rule: If 1-text meme, leave bottom_text empty)` : ''
+      const finalPrompt = `${prefix}${userPrompt}${suffix}`
 
       const res = await fetch('https://justmeme.wtf/api/v1/ai-generate', {
         method: 'POST',
@@ -30,7 +32,7 @@ export function AIPanel({ open, templateId, onApply, onClose }: AIPanelProps) {
         body: JSON.stringify({ prompt: finalPrompt })
       })
       const data = await res.json()
-      if (data.success && data.top_text && data.bottom_text) {
+      if (data.success && typeof data.top_text === 'string' && typeof data.bottom_text === 'string') {
         onApply(data.top_text, data.bottom_text)
         setPrompt('')
       } else {

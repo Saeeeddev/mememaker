@@ -314,8 +314,8 @@ export function Editor() {
 
     if (topText && bottomText) {
       // Standard two-text meme
-      createText(topText, fc.height * 0.03, true, 'top')
-      createText(bottomText, fc.height * 0.97, false, 'bottom')
+      createText(topText, fc.height * 0.05, true, 'top')
+      createText(bottomText, fc.height * 0.95, false, 'bottom')
     } else if (topText && !bottomText) {
       // One-text meme, start it in the center so the user can easily drag it into position (e.g. a sign)
       createText(topText, fc.height * 0.5, true, 'center')

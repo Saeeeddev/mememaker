@@ -227,7 +227,7 @@ export function EditorCanvas({
           <Sparkles size={17} />
           <span className="text-[8px] font-semibold tracking-wide">AI</span>
           <span className="absolute -top-1 -right-1 bg-violet-500 text-white text-[6px] font-bold px-1 rounded-sm">
-            SOON
+           
           </span>
         </button>
       </div>
