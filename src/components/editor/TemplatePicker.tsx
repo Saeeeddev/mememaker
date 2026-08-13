@@ -1,4 +1,5 @@
-import { Search, Upload, Check } from 'lucide-react'
+import { useState, useMemo } from 'react'
+import { Search, Upload, Check, Clock, TrendingUp } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { BLANK_IMAGE, type MemeTemplate } from './types'
 
@@ -37,11 +38,24 @@ export function TemplatePicker({
   starsCount = 0,
   onOpenTopup,
 }: TemplatPickerProps) {
-  const visibleMemes = filtered.slice(0, page * PER_PAGE)
-  const hasMore = visibleMemes.length < filtered.length
+  const [activeTab, setActiveTab] = useState<'trending' | 'recent'>('trending')
 
-  // silence unused warning
-  void memes
+  const recentUrls = useMemo(() => {
+    try {
+      return JSON.parse(localStorage.getItem('meme_recents') || '[]') as string[]
+    } catch {
+      return []
+    }
+  }, []) // Runs on mount
+
+  const recentMemes = useMemo(() => {
+    // Map recent URLs to MemeTemplate objects. Keep the order of recentUrls.
+    return recentUrls.map(url => memes.find(m => m.url === url)).filter(Boolean) as MemeTemplate[]
+  }, [recentUrls, memes])
+
+  const currentList = activeTab === 'trending' ? filtered : recentMemes
+  const visibleMemes = currentList.slice(0, page * PER_PAGE)
+  const hasMore = visibleMemes.length < currentList.length
 
   return (
     <div className="flex flex-col min-h-[calc(100dvh-100px)] bg-black -mx-4 -mt-4">
@@ -88,6 +102,32 @@ export function TemplatePicker({
             className="flex-1 bg-transparent text-white text-[14px] placeholder-white/30 outline-none"
           />
         </div>
+      </div>
+
+      {/* Tabs */}
+      <div className="px-4 mb-4 flex gap-2">
+        <button
+          onClick={() => { setActiveTab('trending'); setPage(() => 1); }}
+          className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-[12px] text-[13px] font-bold transition-all ${
+            activeTab === 'trending'
+              ? 'bg-[#229ED9] text-white shadow-[0_4px_16px_rgba(34,158,217,0.3)]'
+              : 'bg-[#141416] text-white/50 hover:bg-[#1c1c1e] hover:text-white/80'
+          }`}
+        >
+          <TrendingUp size={16} />
+          Trending
+        </button>
+        <button
+          onClick={() => { setActiveTab('recent'); setPage(() => 1); }}
+          className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-[12px] text-[13px] font-bold transition-all ${
+            activeTab === 'recent'
+              ? 'bg-[#229ED9] text-white shadow-[0_4px_16px_rgba(34,158,217,0.3)]'
+              : 'bg-[#141416] text-white/50 hover:bg-[#1c1c1e] hover:text-white/80'
+          }`}
+        >
+          <Clock size={16} />
+          Recent
+        </button>
       </div>
 
       {/* Gallery grid */}

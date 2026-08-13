@@ -1,5 +1,5 @@
 import { useRef, useEffect, useState } from 'react'
-import { RotateCw, Crop, Pencil, X, Minus, Plus, Layers as LayersIcon, Type, Sparkles, Maximize, Edit2, Undo2, Redo2 } from 'lucide-react'
+import { RotateCw, Crop, Pencil, X, Minus, Plus, Layers as LayersIcon, Type, Sparkles, Maximize, Edit2, Undo2, Redo2, Trash2 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 
 /* Fabric loaded via CDN in index.html */
@@ -42,6 +42,7 @@ interface EditorCanvasProps {
   hasSelected?: boolean
   onUndo?: () => void
   onRedo?: () => void
+  onClearDrawings?: () => void
   canUndo?: boolean
   canRedo?: boolean
   isFullScreen?: boolean
@@ -76,12 +77,6 @@ export function colorToRgba(color: string, opacity: number): string {
   return color
 }
 
-const DRAW_COLORS = [
-  '#ffffff', '#000000', '#ef4444', '#f97316',
-  '#eab308', '#22c55e', '#3b82f6', '#a855f7',
-  '#ec4899', '#06b6d4',
-]
-
 export function EditorCanvas({
   canvasKey,
   canvasRef,
@@ -101,17 +96,13 @@ export function EditorCanvas({
   onRedo,
   canUndo,
   canRedo,
+  onClearDrawings,
   isFullScreen,
   onToggleFullScreen,
 }: EditorCanvasProps) {
-  const [showDrawSettings, setShowDrawSettings] = useState(false)
-
   // When draw mode toggles, also open settings if turning on
   const handleToggleDraw = () => {
     onToggleDraw()
-    if (!isDrawingMode) {
-      setShowDrawSettings(true)
-    }
   }
 
   return (
@@ -124,124 +115,7 @@ export function EditorCanvas({
       >
         <canvas ref={canvasRef} className="block shadow-2xl rounded-sm" />
 
-        {/* Floating Draw Settings popover panel */}
-        <AnimatePresence>
-          {showDrawSettings && isDrawingMode && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.92, y: -10 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.92, y: -10 }}
-              transition={{ duration: 0.18 }}
-              className="absolute top-3 right-3 z-50 bg-[#15161a]/95 backdrop-blur-xl border border-white/15 rounded-[22px] p-4 w-64 shadow-[0_16px_40px_rgba(0,0,0,0.6)]"
-            >
-              {/* Header */}
-              <div className="flex items-center justify-between mb-3 pb-2 border-b border-white/10">
-                <div className="flex items-center gap-2">
-                  <Pencil size={15} className="text-[#229ED9]" />
-                  <span className="text-white font-bold text-[13px]">Brush Settings</span>
-                </div>
-                <button
-                  onClick={() => setShowDrawSettings(false)}
-                  className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white/20 transition-colors"
-                >
-                  <X size={16} strokeWidth={3} />
-                </button>
-              </div>
 
-              {/* Color swatches */}
-              <div className="mb-3.5">
-                <span className="text-white/50 text-[11px] font-semibold mb-2 block">Brush Color</span>
-                <div className="grid grid-cols-5 gap-1.5 mb-2">
-                  {DRAW_COLORS.map(c => (
-                    <button
-                      key={c}
-                      onClick={() => onUpdateDrawSettings({ color: c })}
-                      className={`w-7 h-7 rounded-full border-2 transition-all active:scale-90 ${
-                        drawSettings.color === c
-                          ? 'border-white scale-110 shadow-lg'
-                          : 'border-transparent hover:border-white/40'
-                      }`}
-                      style={{ backgroundColor: c }}
-                    />
-                  ))}
-                </div>
-                {/* Custom color input */}
-                <div className="flex items-center justify-between bg-white/5 rounded-[10px] px-2.5 py-1.5 border border-white/8">
-                  <span className="text-white/60 text-[11px] font-semibold">Custom Color</span>
-                  <div
-                    className="w-6 h-6 rounded-full border-2 border-white/20 relative overflow-hidden"
-                    style={{ backgroundColor: drawSettings.color }}
-                  >
-                    <input
-                      type="color"
-                      value={drawSettings.color}
-                      onChange={e => onUpdateDrawSettings({ color: e.target.value })}
-                      className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Brush width / size */}
-              <div className="mb-3.5">
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-white/50 text-[11px] font-semibold">Brush Size</span>
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-white text-[11px] font-bold">{drawSettings.width}px</span>
-                    {/* Live thickness preview circle */}
-                    <div
-                      className="rounded-full bg-white transition-all border border-black/30"
-                      style={{
-                        width: Math.min(18, Math.max(4, drawSettings.width / 2)),
-                        height: Math.min(18, Math.max(4, drawSettings.width / 2)),
-                        backgroundColor: drawSettings.color,
-                        opacity: drawSettings.opacity,
-                      }}
-                    />
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => onUpdateDrawSettings({ width: Math.max(1, drawSettings.width - 2) })}
-                    className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-white/60 hover:bg-white/20 transition-colors shrink-0"
-                  >
-                    <Minus size={10} />
-                  </button>
-                  <input
-                    type="range"
-                    min={1}
-                    max={50}
-                    value={drawSettings.width}
-                    onChange={e => onUpdateDrawSettings({ width: parseInt(e.target.value) })}
-                    className="flex-1 accent-[#229ED9]"
-                  />
-                  <button
-                    onClick={() => onUpdateDrawSettings({ width: Math.min(50, drawSettings.width + 2) })}
-                    className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-white/60 hover:bg-white/20 transition-colors shrink-0"
-                  >
-                    <Plus size={10} />
-                  </button>
-                </div>
-              </div>
-
-              {/* Opacity */}
-              <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-white/50 text-[11px] font-semibold">Opacity</span>
-                  <span className="text-white text-[11px] font-bold">{Math.round(drawSettings.opacity * 100)}%</span>
-                </div>
-                <input
-                  type="range"
-                  min={10}
-                  max={100}
-                  value={Math.round(drawSettings.opacity * 100)}
-                  onChange={e => onUpdateDrawSettings({ opacity: parseInt(e.target.value) / 100 })}
-                  className="w-full accent-[#229ED9]"
-                />
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
 
         {/* Floating Controls (Top Left) */}
         <div className="absolute top-3 left-3 flex items-center gap-2">

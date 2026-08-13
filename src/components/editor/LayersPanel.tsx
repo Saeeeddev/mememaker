@@ -6,6 +6,7 @@ interface LayersPanelProps {
   isOpen: boolean
   onClose: () => void
   fabricRef: React.MutableRefObject<any>
+  isFullScreen?: boolean
 }
 
 interface LayerItem {
@@ -19,7 +20,7 @@ interface LayerItem {
   isBackground: boolean
 }
 
-export function LayersPanel({ isOpen, onClose, fabricRef }: LayersPanelProps) {
+export function LayersPanel({ isOpen, onClose, fabricRef, isFullScreen }: LayersPanelProps) {
   const [layers, setLayers] = useState<LayerItem[]>([])
   const [selectedObj, setSelectedObj] = useState<any>(null)
 
@@ -158,14 +159,16 @@ export function LayersPanel({ isOpen, onClose, fabricRef }: LayersPanelProps) {
   return (
     <AnimatePresence>
       {isOpen && (
-        <motion.div
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: 20 }}
-          transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-          className="absolute top-4 right-4 z-50 w-56 bg-[#1a1c23]/95 backdrop-blur-xl border border-white/10 rounded-[20px] overflow-hidden flex flex-col shadow-[0_8px_32px_rgba(0,0,0,0.5)] max-h-[70vh]"
-        >
-          {/* Header */}
+        <>
+          <div className="absolute inset-0 z-40" onClick={onClose} />
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 20 }}
+            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+            className={`absolute ${isFullScreen ? 'bottom-4' : 'top-4'} right-4 z-50 w-56 bg-[#1a1c23]/95 backdrop-blur-xl border border-white/10 rounded-[20px] overflow-hidden flex flex-col shadow-[0_8px_32px_rgba(0,0,0,0.5)] max-h-[70vh]`}
+          >
+            {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 bg-black/20">
             <div className="flex items-center gap-2">
               <LayersIcon size={16} className="text-white" />
@@ -249,6 +252,7 @@ export function LayersPanel({ isOpen, onClose, fabricRef }: LayersPanelProps) {
             })}
           </div>
         </motion.div>
+        </>
       )}
     </AnimatePresence>
   )

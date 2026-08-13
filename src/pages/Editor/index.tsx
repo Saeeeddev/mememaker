@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Search, Upload, Check, RotateCw, Crop, Pencil, X, Type, Sparkles, Undo2, Edit2, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react'
+import { Search, Upload, Check, RotateCw, Crop, Pencil, X, Type, Sparkles, Undo2, Edit2, ChevronLeft, ChevronRight, Loader2, Trash2, Minus, Plus } from 'lucide-react'
 import {
   EditorTopBar,
   EditorCanvas,
@@ -8,12 +8,19 @@ import {
   TextEditPanel,
   useFabricCanvas,
   LayersPanel,
+  AIPanel,
   BOT_TOKEN,
   BLANK_IMAGE,
   type MemeTemplate,
   type TextEditState,
   type SelectableObj,
 } from '@components/editor'
+
+const DRAW_COLORS = [
+  '#ffffff', '#000000', '#ef4444', '#f97316',
+  '#eab308', '#22c55e', '#3b82f6', '#a855f7',
+  '#ec4899', '#06b6d4',
+]
 
 /* ─── Fabric loaded via CDN in index.html ─── */
 declare global {
@@ -100,8 +107,10 @@ export function Editor() {
   const [isFullScreen, setIsFullScreen] = useState(false)
   const [isFullScreenPanelOpen, setIsFullScreenPanelOpen] = useState(false)
   const [isCropping, setIsCropping] = useState(false)
+  const [showDrawSettings, setShowDrawSettings] = useState(false)
   const [isPickerReady, setIsPickerReady] = useState(false)
   const [isTemplateApplying, setIsTemplateApplying] = useState(false)
+  const [showAIPanel, setShowAIPanel] = useState(false)
   const [textEdit, setTextEdit] = useState<TextEditState>({
     text: '',
     fontFamily: 'Impact',
@@ -259,6 +268,67 @@ export function Editor() {
       fc.freeDrawingBrush.opacity = drawSettings.opacity
     }
   }, [drawSettings, isDrawingMode])
+
+  const handleClearDrawings = useCallback(() => {
+    const fc = fabricRef.current as any
+    if (!fc) return
+    saveHistory()
+    const paths = fc.getObjects().filter((o: any) => o.type === 'path' && o.name !== 'cropRect')
+    if (paths.length > 0) {
+      paths.forEach((p: any) => fc.remove(p))
+      fc.requestRenderAll()
+    }
+  }, [saveHistory])
+
+  // ── AI Generate Implementation ──
+  const handleAIGenerate = useCallback((topText: string, bottomText: string) => {
+    const fc = fabricRef.current as any
+    const fabric = window.fabric
+    if (!fc || !fabric) return
+
+    saveHistory()
+
+    const createText = (text: string, yPos: number, isTop: boolean, originY: 'top' | 'bottom' | 'center') => {
+      const maxW = fc.width * 0.96;
+      
+      const textObj = new fabric.Textbox(text.toUpperCase(), {
+        left: fc.width / 2,
+        top: yPos,
+        width: maxW,
+        fontFamily: 'Impact',
+        fontSize: Math.min(fc.width * 0.12, 45), // Responsive font size
+        fill: '#ffffff',
+        stroke: '#000000',
+        strokeWidth: 2,
+        originX: 'center',
+        originY: originY,
+        textAlign: 'center',
+        cornerColor: '#229ED9',
+        cornerStrokeColor: '#ffffff',
+        borderColor: '#229ED9',
+        transparentCorners: false,
+        name: `text-${Date.now()}-${isTop ? 'top' : 'bottom'}`,
+      })
+      fc.add(textObj)
+    }
+
+    if (topText && bottomText) {
+      // Standard two-text meme
+      createText(topText, fc.height * 0.03, true, 'top')
+      createText(bottomText, fc.height * 0.97, false, 'bottom')
+    } else if (topText && !bottomText) {
+      // One-text meme, start it in the center so the user can easily drag it into position (e.g. a sign)
+      createText(topText, fc.height * 0.5, true, 'center')
+    } else if (!topText && bottomText) {
+      createText(bottomText, fc.height * 0.5, false, 'center')
+    }
+
+    fc.renderAll()
+    setShowAIPanel(false)
+    if (isFullScreen) {
+      setIsFullScreenPanelOpen(false)
+    }
+  }, [saveHistory, isFullScreen])
 
   // ── Go to editor with a chosen template ──
   const goToEdit = useCallback((src: string) => {
@@ -714,7 +784,7 @@ export function Editor() {
           )}
 
           {/* ── Canvas + side toolbar (flex-1 fills all space between top and bottom) ── */}
-          <div className={`relative flex-1 flex flex-col min-h-0 min-w-0 ${isFullScreen ? 'fixed inset-0 z-50 bg-black' : ''}`}>
+          <div className={`relative flex-1 flex flex-col min-h-0 min-w-0 ${isFullScreen ? 'fixed inset-0 z-50 bg-black overflow-hidden' : ''}`}>
             <EditorCanvas
               isFullScreen={isFullScreen}
               onToggleFullScreen={() => setIsFullScreen(prev => !prev)}
@@ -738,10 +808,14 @@ export function Editor() {
                 }
                 setShowEditPanel(true)
               }}
-              onGenerateAI={() => {}}
+              onGenerateAI={() => {
+                if (isCropping) cancelCrop()
+                setShowAIPanel(true)
+              }}
               hasSelected={hasSelected}
               onUndo={undo}
               onRedo={redo}
+              onClearDrawings={handleClearDrawings}
               canUndo={canUndo}
               canRedo={canRedo}
             />
@@ -750,9 +824,35 @@ export function Editor() {
               isOpen={showLayersPanel}
               onClose={() => setShowLayersPanel(false)}
               fabricRef={fabricRef}
+              isFullScreen={isFullScreen}
             />
 
 
+
+            {/* ── Full Screen Close Button (Top Right) ── */}
+            <AnimatePresence>
+              {isFullScreen && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  className="absolute top-[calc(env(safe-area-inset-top)+16px)] right-4 z-[51]"
+                >
+                  <button
+                    onClick={() => { setIsFullScreen(false); setIsFullScreenPanelOpen(false); }}
+                    className="flex items-center gap-2 px-3 py-2 rounded-full bg-black/60 backdrop-blur-xl border border-white/20 text-white shadow-lg active:scale-95 transition-all"
+                  >
+                    <X size={16} />
+                    <span className="text-[12px] font-bold">Close Full Screen</span>
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* ── Full Screen Right Panel Backdrop ── */}
+            {isFullScreen && isFullScreenPanelOpen && (
+              <div className="absolute inset-0 z-40" onClick={() => setIsFullScreenPanelOpen(false)} />
+            )}
 
             {/* ── Full Screen Right Panel ── */}
             <AnimatePresence>
@@ -775,14 +875,14 @@ export function Editor() {
                   {/* Panel Content */}
                   <div className="w-[180px] bg-[#1c1c1e]/95 backdrop-blur-xl border-y border-l border-white/10 rounded-l-2xl h-auto py-2 shadow-[-8px_0_32px_rgba(0,0,0,0.5)]">
                     <div className="w-[180px] flex flex-col gap-1 px-2">
-                      <button onClick={openPicker} className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl hover:bg-white/10 text-white/80 transition-colors text-[13px] font-semibold">
+                      <button onClick={() => { setIsFullScreenPanelOpen(false); openPicker(); }} className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl hover:bg-white/10 text-white/80 transition-colors text-[13px] font-semibold">
                         <Search size={16} /> Change Template
                       </button>
-                      <button onClick={() => addImageInputRef.current?.click()} className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl hover:bg-white/10 text-white/80 transition-colors text-[13px] font-semibold">
+                      <button onClick={() => { setIsFullScreenPanelOpen(false); addImageInputRef.current?.click(); }} className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl hover:bg-white/10 text-white/80 transition-colors text-[13px] font-semibold">
                         <Upload size={16} /> Add Image
                       </button>
-                      <button onClick={undo} disabled={!canUndo} className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-xl transition-colors text-[13px] font-semibold ${canUndo ? 'hover:bg-white/10 text-white/80' : 'text-white/30 cursor-not-allowed'}`}>
-                        <Undo2 size={16} /> Recent
+                      <button onClick={() => { setIsFullScreenPanelOpen(false); undo(); }} disabled={!canUndo} className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-xl transition-colors text-[13px] font-semibold ${canUndo ? 'hover:bg-white/10 text-white/80' : 'text-white/30 cursor-not-allowed'}`}>
+                        <Undo2 size={16} /> Undo
                       </button>
                       <button 
                         onClick={() => { 
@@ -802,21 +902,20 @@ export function Editor() {
                       <button onClick={handleRotate} className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl hover:bg-white/10 text-white/80 transition-colors text-[13px] font-semibold">
                         <RotateCw size={16} /> Rotate
                       </button>
-                      <button onClick={toggleCrop} className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl hover:bg-white/10 text-white/80 transition-colors text-[13px] font-semibold">
+                      <button onClick={() => { setIsFullScreenPanelOpen(false); toggleCrop(); }} className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl hover:bg-white/10 text-white/80 transition-colors text-[13px] font-semibold">
                         <Crop size={16} /> Crop
                       </button>
-                      <button onClick={toggleDraw} className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-xl transition-colors text-[13px] font-semibold ${isDrawingMode ? 'bg-[#229ED9]/20 text-[#229ED9]' : 'hover:bg-white/10 text-white/80'}`}>
+                      <button onClick={() => { setIsFullScreenPanelOpen(false); toggleDraw(); }} className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-xl transition-colors text-[13px] font-semibold ${isDrawingMode ? 'bg-[#229ED9]/20 text-[#229ED9]' : 'hover:bg-white/10 text-white/80'}`}>
                         <Pencil size={16} /> Draw
                       </button>
-                      <button onClick={() => {}} className="relative flex items-center gap-3 w-full px-3 py-2.5 rounded-xl hover:bg-violet-500/10 text-violet-400 transition-colors text-[13px] font-semibold">
+                      <button onClick={() => { setIsFullScreenPanelOpen(false); setShowAIPanel(true); }} className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl hover:bg-violet-500/10 text-violet-400 transition-colors text-[13px] font-semibold">
                         <Sparkles size={16} /> AI Generate
-                        <span className="absolute right-3 bg-violet-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-sm">SOON</span>
                       </button>
                       
                       <div className="h-px bg-white/10 my-1 mx-2" />
                       
                       <button onClick={() => { setIsFullScreen(false); setIsFullScreenPanelOpen(false); }} className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl hover:bg-red-500/10 text-red-400 transition-colors text-[13px] font-semibold mt-1">
-                        <X size={16} /> Exit
+                        <X size={16} /> Close Full Screen
                       </button>
                     </div>
                   </div>
@@ -848,6 +947,27 @@ export function Editor() {
                   Confirm Crop
                 </button>
               </motion.div>
+            ) : isDrawingMode ? (
+              <motion.div
+                key="draw-actions"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 20 }}
+                className={`${isFullScreen ? 'absolute bottom-8 left-0 right-0 z-[55] bg-[#111113]/95 backdrop-blur-xl border-t border-white/10 pt-3 pb-safe' : 'pt-2'} px-4 pb-4 flex gap-3`}
+              >
+                <button
+                  onClick={toggleDraw}
+                  className="flex-1 py-3 rounded-[14px] bg-[#1c1c1e] text-white font-bold text-[14px] border border-white/10 hover:bg-[#252528] active:scale-[0.98] transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => setShowDrawSettings(true)}
+                  className="flex-1 py-3 rounded-[14px] bg-[#229ED9] text-white font-bold text-[14px] shadow-[0_4px_24px_rgba(34,158,217,0.4)] hover:bg-[#2ab6f6] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                >
+                  <Pencil size={16} /> Brush Settings
+                </button>
+              </motion.div>
             ) : (
               !isFullScreen && (
                 <motion.div key="bottom-actions" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
@@ -859,6 +979,147 @@ export function Editor() {
         </>
       )}
 
+      {/* ── Draw Settings Popup ── */}
+      <AnimatePresence>
+        {showDrawSettings && isDrawingMode && (
+          <>
+            <div 
+              className="absolute inset-0 z-[60]" 
+              onClick={() => setShowDrawSettings(false)} 
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.92, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.92, y: 10 }}
+              transition={{ duration: 0.18 }}
+              className={`absolute bottom-24 right-4 z-[65] bg-[#15161a]/95 backdrop-blur-xl border border-white/15 rounded-[22px] p-4 w-64 shadow-[0_16px_40px_rgba(0,0,0,0.6)]`}
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between mb-3 pb-2 border-b border-white/10">
+                <div className="flex items-center gap-2">
+                  <Pencil size={15} className="text-[#229ED9]" />
+                  <span className="text-white font-bold text-[13px]">Brush Settings</span>
+                </div>
+                <button
+                  onClick={() => setShowDrawSettings(false)}
+                  className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white/20 transition-colors"
+                >
+                  <X size={16} strokeWidth={3} />
+                </button>
+              </div>
+
+              {/* Color swatches */}
+              <div className="mb-3.5">
+                <span className="text-white/50 text-[11px] font-semibold mb-2 block">Brush Color</span>
+                <div className="grid grid-cols-5 gap-1.5 mb-2">
+                  {DRAW_COLORS.map(c => (
+                    <button
+                      key={c}
+                      onClick={() => setDrawSettings(prev => ({ ...prev, color: c }))}
+                      className={`w-7 h-7 rounded-full border-2 transition-all active:scale-90 ${
+                        drawSettings.color === c
+                          ? 'border-white scale-110 shadow-lg'
+                          : 'border-transparent hover:border-white/40'
+                      }`}
+                      style={{ backgroundColor: c }}
+                    />
+                  ))}
+                </div>
+                {/* Custom color input */}
+                <div className="flex items-center justify-between bg-white/5 rounded-[10px] px-2.5 py-1.5 border border-white/8">
+                  <span className="text-white/60 text-[11px] font-semibold">Custom Color</span>
+                  <div
+                    className="w-6 h-6 rounded-full border-2 border-white/20 relative overflow-hidden"
+                    style={{ backgroundColor: drawSettings.color }}
+                  >
+                    <input
+                      type="color"
+                      value={drawSettings.color}
+                      onChange={e => setDrawSettings(prev => ({ ...prev, color: e.target.value }))}
+                      className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Brush width / size */}
+              <div className="mb-3.5">
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-white/50 text-[11px] font-semibold">Brush Size</span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-white text-[11px] font-bold">{drawSettings.width}px</span>
+                    <div
+                      className="rounded-full bg-white transition-all border border-black/30"
+                      style={{
+                        width: Math.min(18, Math.max(4, drawSettings.width / 2)),
+                        height: Math.min(18, Math.max(4, drawSettings.width / 2)),
+                        backgroundColor: drawSettings.color,
+                        opacity: drawSettings.opacity,
+                      }}
+                    />
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setDrawSettings(prev => ({ ...prev, width: Math.max(1, prev.width - 2) }))}
+                    className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-white/60 hover:bg-white/20 transition-colors shrink-0"
+                  >
+                    <Minus size={10} />
+                  </button>
+                  <input
+                    type="range"
+                    min={1}
+                    max={50}
+                    value={drawSettings.width}
+                    onChange={e => setDrawSettings(prev => ({ ...prev, width: parseInt(e.target.value) }))}
+                    className="flex-1 accent-[#229ED9]"
+                  />
+                  <button
+                    onClick={() => setDrawSettings(prev => ({ ...prev, width: Math.min(50, prev.width + 2) }))}
+                    className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-white/60 hover:bg-white/20 transition-colors shrink-0"
+                  >
+                    <Plus size={10} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Opacity */}
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-white/50 text-[11px] font-semibold">Opacity</span>
+                  <span className="text-white text-[11px] font-bold">{Math.round(drawSettings.opacity * 100)}%</span>
+                </div>
+                <input
+                  type="range"
+                  min={10}
+                  max={100}
+                  value={Math.round(drawSettings.opacity * 100)}
+                  onChange={e => setDrawSettings(prev => ({ ...prev, opacity: parseInt(e.target.value) / 100 }))}
+                  className="w-full accent-[#229ED9]"
+                />
+              </div>
+
+              {/* Eraser / Undo Tools */}
+              <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between">
+                <button
+                  onClick={() => undo()}
+                  disabled={!canUndo}
+                  className={`flex items-center gap-1.5 text-[12px] font-bold transition-colors ${canUndo ? 'text-white hover:text-white' : 'text-white/30 cursor-not-allowed'}`}
+                >
+                  <Undo2 size={14} /> Undo Stroke
+                </button>
+                <button
+                  onClick={() => handleClearDrawings()}
+                  className="flex items-center gap-1.5 text-red-400 hover:text-red-300 transition-colors text-[12px] font-bold"
+                >
+                  <Trash2 size={14} /> Clear All
+                </button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
       {/* ── Text Edit Bottom Sheet ── */}
       <TextEditPanel
         open={showEditPanel}
@@ -866,6 +1127,14 @@ export function Editor() {
         onApply={applyTextEdit}
         onDelete={deleteText}
         onClose={() => setShowEditPanel(false)}
+      />
+
+      {/* ── AI Generation Panel ── */}
+      <AIPanel
+        open={showAIPanel}
+        templateId={selectedSrc ? new URL(selectedSrc).pathname.split('/').pop()?.split('.')[0] || 'meme' : 'meme'}
+        onApply={handleAIGenerate}
+        onClose={() => setShowAIPanel(false)}
       />
 
       {/* ════════════════════════════════════════════════════════════
