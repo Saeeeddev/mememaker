@@ -281,7 +281,7 @@ export function Editor() {
   }, [saveHistory])
 
   // ── AI Generate Implementation ──
-  const handleAIGenerate = useCallback((texts: string[]) => {
+  const handleAIGenerate = useCallback((texts: {text: string, x_percent: number, y_percent: number, font_size?: number, text_color?: string, stroke_color?: string}[]) => {
     const fc = fabricRef.current as any
     const fabric = window.fabric
     if (!fc || !fabric || !texts || texts.length === 0) return
@@ -296,20 +296,31 @@ export function Editor() {
       }
     })
 
-    const createText = (text: string, yPos: number, originY: 'top' | 'bottom' | 'center', index: number) => {
+    const createText = (item: {text: string, x_percent: number, y_percent: number, font_size?: number, text_color?: string, stroke_color?: string}, index: number) => {
       const maxW = fc.height > fc.width ? fc.width * 0.9 : fc.width * 0.96;
       
-      const textObj = new fabric.Textbox(text.toUpperCase(), {
-        left: fc.width / 2,
+      const xPos = fc.width * (item.x_percent / 100);
+      const yPos = fc.height * (item.y_percent / 100);
+      
+      // Calculate font size using AI suggestion (relative to 400px base) or a smaller fallback
+      const aiFontSize = item.font_size || 25;
+      const calcFontSize = (aiFontSize / 400) * fc.width;
+      
+      // Dynamic stroke width (about 1/15th of the font size, min 1px)
+      const dynamicStrokeWidth = Math.max(1, calcFontSize / 15);
+      
+      const textObj = new fabric.Textbox(item.text.toUpperCase(), {
+        left: xPos,
         top: yPos,
         width: maxW,
-        fontFamily: 'Impact',
-        fontSize: Math.min(fc.width * 0.12, 45), // Responsive font size
-        fill: '#ffffff',
-        stroke: '#000000',
-        strokeWidth: 2,
+        fontFamily: 'Arial',
+        fontSize: calcFontSize,
+        fontWeight: 'bold',
+        fill: item.text_color || '#ffffff',
+        stroke: item.stroke_color || '#000000',
+        strokeWidth: dynamicStrokeWidth,
         originX: 'center',
-        originY: originY,
+        originY: 'center',
         textAlign: 'center',
         cornerColor: '#229ED9',
         cornerStrokeColor: '#ffffff',
@@ -321,23 +332,9 @@ export function Editor() {
       fc.add(textObj)
     }
 
-    if (texts.length === 1) {
-      createText(texts[0], fc.height * 0.5, 'center', 0)
-    } else if (texts.length === 2) {
-      createText(texts[0], fc.height * 0.05, 'top', 0)
-      createText(texts[1], fc.height * 0.95, 'bottom', 1)
-    } else {
-      // For 3+ texts, space them out evenly
-      const spacing = 0.9 / (texts.length - 1);
-      texts.forEach((text, index) => {
-        let originY: 'top' | 'center' | 'bottom' = 'center';
-        if (index === 0) originY = 'top';
-        else if (index === texts.length - 1) originY = 'bottom';
-
-        const yPos = fc.height * (0.05 + (index * spacing));
-        createText(text, yPos, originY, index);
-      });
-    }
+    texts.forEach((item, index) => {
+      createText(item, index);
+    });
 
     fc.renderAll()
     setShowAIPanel(false)
@@ -415,7 +412,7 @@ export function Editor() {
       fontSize: 40,
       fontWeight: 'bold',
       stroke: '#000000',
-      strokeWidth: 2,
+      strokeWidth: 40 / 15,
       originX: 'center',
       originY: 'center',
       paintFirst: 'stroke',
@@ -495,10 +492,13 @@ export function Editor() {
     const fc = fabricRef.current as any
     if (!fc) return
     const active = fc.getActiveObject() as any
-    if (!active || active.type !== 'text') return
+    if (!active || !(active.type === 'text' || active.type === 'textbox' || active.type === 'i-text')) return
     if (patch.text !== undefined) active.set('text', patch.text)
     if (patch.fontFamily !== undefined) active.set('fontFamily', patch.fontFamily)
-    if (patch.fontSize !== undefined) active.set('fontSize', patch.fontSize)
+    if (patch.fontSize !== undefined) {
+      active.set('fontSize', patch.fontSize)
+      active.set('strokeWidth', Math.max(1, patch.fontSize / 15))
+    }
     if (patch.textColor !== undefined) active.set('fill', patch.textColor)
     if (patch.strokeColor !== undefined) active.set('stroke', patch.strokeColor)
     fc.renderAll()
@@ -509,7 +509,7 @@ export function Editor() {
     const fc = fabricRef.current as any
     if (!fc) return
     const active = fc.getActiveObject()
-    if (active && active.type === 'text') {
+    if (active && (active.type === 'text' || active.type === 'textbox' || active.type === 'i-text')) {
       fc.remove(active)
       fc.discardActiveObject()
       fc.renderAll()
@@ -1148,6 +1148,7 @@ export function Editor() {
       <AIPanel
         open={showAIPanel}
         templateId={selectedSrc ? new URL(selectedSrc).pathname.split('/').pop()?.split('.')[0] || 'meme' : 'meme'}
+        templateImageUrl={selectedSrc}
         onApply={handleAIGenerate}
         onClose={() => setShowAIPanel(false)}
       />

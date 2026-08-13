@@ -7,11 +7,12 @@ import { GoogleGenAI, Type } from '@google/genai'
 interface AIPanelProps {
   open: boolean
   templateId: string | null
-  onApply: (texts: string[]) => void
+  templateImageUrl: string | null
+  onApply: (texts: {text: string, x_percent: number, y_percent: number, font_size?: number, text_color?: string, stroke_color?: string}[]) => void
   onClose: () => void
 }
 
-export function AIPanel({ open, templateId, onApply, onClose }: AIPanelProps) {
+export function AIPanel({ open, templateId, templateImageUrl, onApply, onClose }: AIPanelProps) {
   const [prompt, setPrompt] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -32,18 +33,55 @@ export function AIPanel({ open, templateId, onApply, onClose }: AIPanelProps) {
 
       const cleanTemplateId = (templateId || 'Unknown Meme').replace(/-/g, ' ');
       
+      let imagePart = null;
+      if (templateImageUrl) {
+        try {
+          const res = await fetch(templateImageUrl);
+          const blob = await res.blob();
+          const base64 = await new Promise<string>((resolve) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(blob);
+            reader.onloadend = () => resolve(reader.result as string);
+          });
+          const base64Data = base64.split(',')[1];
+          imagePart = {
+            inlineData: {
+              data: base64Data,
+              mimeType: blob.type
+            }
+          };
+        } catch (e) {
+          console.warn("Failed to fetch template image for AI", e);
+        }
+      }
+
+      const contents = [];
+      if (imagePart) contents.push(imagePart);
+      contents.push(`Template: ${cleanTemplateId}\nSubject: ${prompt}`);
+
       const response = await ai.models.generateContent({
         model: 'gemini-3.5-flash',
-        contents: `Template: ${cleanTemplateId}\nSubject: ${prompt}`,
+        contents: contents as any,
         config: {
-          systemInstruction: "You are an expert meme generator. You MUST combine the provided Template with the User's Subject.\n\nRULES:\n1. UNDERSTAND THE TEMPLATE: Use your internet culture knowledge to know the exact format, joke structure, and exact number of text boxes required for the requested Template.\n2. APPLY THE SUBJECT: Write the meme strictly about the User's Subject, forcing it to fit the template's joke structure perfectly.\n3. KEEP IT EXTREMELY SHORT: Meme text must be punchy and large. NEVER exceed 8 words per text box! The shorter, the better.\n4. OUTPUT: Output an array of strings in order from top to bottom.",
+          systemInstruction: "You are an expert meme generator. You MUST combine the provided Template with the User's Subject.\n\nRULES:\n1. OBSERVE THE TEMPLATE: Look at the provided image. Find the natural blank spaces or intended text areas where text should go.\n2. THE JOKE: Write a FULL, funny joke that fits the template's structure based on the User's Subject. Keep it punchy (max 8 words per text box).\n3. PLACEMENT: For each text box, provide the x_percent and y_percent coordinates (0-100) of its center point relative to the image dimensions.\n4. STYLING: Suggest a font_size (15-35, default 25), text_color (hex, default #ffffff), and stroke_color (hex, default #000000). Use contrasting colors so text is readable against the image background at that location!\n5. OUTPUT: Output an array of objects.",
           responseMimeType: "application/json",
           responseSchema: {
             type: Type.OBJECT,
             properties: {
               texts: {
                 type: Type.ARRAY,
-                items: { type: Type.STRING }
+                items: {
+                  type: Type.OBJECT,
+                  properties: {
+                    text: { type: Type.STRING },
+                    x_percent: { type: Type.NUMBER, description: "0-100 x coordinate for text center" },
+                    y_percent: { type: Type.NUMBER, description: "0-100 y coordinate for text center" },
+                    font_size: { type: Type.NUMBER, description: "Integer between 15 and 35" },
+                    text_color: { type: Type.STRING, description: "Hex color code e.g. #ffffff" },
+                    stroke_color: { type: Type.STRING, description: "Hex color code e.g. #000000" }
+                  },
+                  required: ["text", "x_percent", "y_percent", "font_size", "text_color", "stroke_color"]
+                }
               }
             },
             required: ["texts"]
