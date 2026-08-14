@@ -7,10 +7,10 @@ export function BottomNav() {
   const location = useLocation()
 
   const navItems = [
-    { path: '/shop', label: 'Shop', icon: ShoppingBag, disabled: true },
-    { path: '/', label: 'Home', icon: Home },
-    { path: '/tasks', label: 'Task', icon: Zap },
-    { path: '/profile', label: 'Profile', icon: User },
+    { path: '/shop', label: 'Shop', icon: ShoppingBag, disabled: false },
+    { path: '/', label: 'Home', icon: Home, disabled: false },
+    { path: '/tasks', label: 'Task', icon: Zap, disabled: false },
+    { path: '/profile', label: 'Profile', icon: User, disabled: false },
   ]
 
   return (

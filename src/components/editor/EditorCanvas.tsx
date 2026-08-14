@@ -1,5 +1,7 @@
 import { useRef, useEffect } from 'react'
 import { RotateCw, Crop, Pencil, Layers as LayersIcon, Type, Sparkles, Maximize, Edit2, Undo2, Redo2 } from 'lucide-react'
+import watermarkHorizontalSrc from '../../assets/images/WatermarckMemeZone.webp'
+import watermarkVerticalSrc from '../../assets/images/Watermark.webp'
 
 /* Fabric loaded via CDN in index.html */
 declare global {
@@ -232,6 +234,45 @@ export function EditorCanvas({
 /* ──────────────────────────────────────────────────────────
    Fabric initialisation hook — robust canvas sizing
 ────────────────────────────────────────────────────────── */
+
+export function applyWatermark(fc: any, width: number, height: number, callback?: () => void) {
+  const isVertical = height > width;
+  const src = isVertical ? watermarkVerticalSrc : watermarkHorizontalSrc;
+  
+  const existing = fc.getObjects().find((o: any) => o.name === 'watermark');
+  if (existing) {
+    fc.remove(existing);
+  }
+
+  window.fabric.Image.fromURL(
+    src,
+    (wmImg: any) => {
+      if (!wmImg || !wmImg.width) {
+        console.error('Failed to load watermark image', wmImg);
+        if (callback) callback();
+        return;
+      }
+      wmImg.set({
+        left: 0,
+        top: 0,
+        originX: 'left',
+        originY: 'top',
+        scaleX: width / wmImg.width,
+        scaleY: height / wmImg.height,
+        selectable: false,
+        evented: false,
+        name: 'watermark',
+        opacity: 1
+      });
+      fc.add(wmImg);
+      wmImg.bringToFront();
+      fc.renderAll();
+      if (callback) callback();
+    },
+    { crossOrigin: 'anonymous' }
+  );
+}
+
 export function useFabricCanvas({
   step,
   canvasKey,
@@ -466,26 +507,10 @@ export function useFabricCanvas({
             }
           )
 
-          // Add watermark text to bottom-right corner
-          const wm = new fabric.Text('@creat_meme_bot', {
-            left: finalW - 10,
-            top: finalH - 10,
-            fontFamily: 'Poppins',
-            fontSize: Math.max(10, Math.round(14 * scale)),
-            fill: 'rgba(255,255,255,0.7)',
-            stroke: 'rgba(0,0,0,0.9)',
-            strokeWidth: 3,
-            paintFirst: 'stroke',
-            originX: 'right',
-            originY: 'bottom',
-            selectable: false,
-            evented: false,
-            fontWeight: 'bold',
-            name: 'watermark',
-          })
-          fc.add(wm)
-          fc.renderAll()
-          if (onSaveHistory) onSaveHistory()
+          // Add watermark image
+          applyWatermark(fc, finalW, finalH, () => {
+            if (onSaveHistory) onSaveHistory();
+          });
         },
         { crossOrigin: 'anonymous' }
       )

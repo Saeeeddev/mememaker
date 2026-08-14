@@ -7,8 +7,10 @@ import {
   EditorBottomActions,
   TextEditPanel,
   useFabricCanvas,
+  applyWatermark,
   LayersPanel,
   AIPanel,
+  SaveModal,
   BOT_TOKEN,
   BLANK_IMAGE,
   type MemeTemplate,
@@ -111,6 +113,7 @@ export function Editor() {
   const [isPickerReady, setIsPickerReady] = useState(false)
   const [isTemplateApplying, setIsTemplateApplying] = useState(false)
   const [showAIPanel, setShowAIPanel] = useState(false)
+  const [isSaveModalOpen, setIsSaveModalOpen] = useState(false)
   const [textEdit, setTextEdit] = useState<TextEditState>({
     text: '',
     fontFamily: 'Impact',
@@ -496,8 +499,9 @@ export function Editor() {
         o.setCoords()
       })
       
-      fc.renderAll()
-      saveHistory()
+      applyWatermark(fc, finalW, finalH, () => {
+        saveHistory();
+      })
     }
   }
 
@@ -656,8 +660,9 @@ export function Editor() {
       }
 
       setIsCropping(false)
-      fc.renderAll()
-      saveHistory()
+      applyWatermark(fc, fc.width, fc.height, () => {
+        saveHistory();
+      })
     })
   }
 
@@ -1001,7 +1006,7 @@ export function Editor() {
             ) : (
               !isFullScreen && (
                 <motion.div key="bottom-actions" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                  <EditorBottomActions onSave={sendToBot} />
+                  <EditorBottomActions onSave={() => setIsSaveModalOpen(true)} />
                 </motion.div>
               )
             )}
@@ -1166,6 +1171,18 @@ export function Editor() {
         templateImageUrl={selectedSrc}
         onApply={handleAIGenerate}
         onClose={() => setShowAIPanel(false)}
+      />
+
+      {/* ── Save Modal ── */}
+      <SaveModal
+        open={isSaveModalOpen}
+        onClose={() => setIsSaveModalOpen(false)}
+        onSaveOption={(option) => {
+          console.log(`Selected save option: ${option}`)
+          setIsSaveModalOpen(false)
+          // The options are not functional yet, so we just use the default save behavior
+          sendToBot()
+        }}
       />
 
       {/* ════════════════════════════════════════════════════════════

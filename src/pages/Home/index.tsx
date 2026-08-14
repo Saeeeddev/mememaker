@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import { Sparkles, Play } from 'lucide-react'
+import { Sparkles } from 'lucide-react'
 import logoMemeZone from '@assets/Logo/LogoMemeZone.webp'
 import banner1 from '@assets/images/Banners/banner1 (1).webp'
 import banner2 from '@assets/images/Banners/baner2.webp'
@@ -65,18 +65,46 @@ export function Home() {
           </div>
         </div>
 
-        {/* Create Meme Button Area (GridScan ends exactly before this!) */}
-        <div className="px-6 pb-6 pt-4 shrink-0">
-          <div className="max-w-sm mx-auto w-full">
-            <button
-              onClick={() => navigate('/editor')}
-              className="w-full py-3.5 rounded-[14px] bg-[#229ED9] font-bold text-[16px] shadow-[0_0_20px_rgba(34,158,217,0.3)] hover:bg-[#2AABEE] transition-all flex items-center justify-center gap-2"
-            >
-              <Play className="fill-current w-4 h-4" />
-              CREATE MEME
-            </button>
-          </div>
-        </div>
+        {/* Create Buttons Area */}
+<div className="px-6 pb-6 pt-4 shrink-0">
+  <div className="max-w-sm mx-auto w-full flex items-center gap-3">
+
+    {/* Create with AI - Pill button */}
+    <button
+      onClick={() => navigate('/editor')}
+      className="relative flex-1 h-14 rounded-full group"
+    >
+      {/* Outer glow */}
+      <div className="absolute -inset-1 rounded-full bg-gradient-to-r from-[#2654d1] via-[#6d3fd6] to-[#9333ea] opacity-70 blur-md group-hover:opacity-100 transition-opacity pointer-events-none" />
+      {/* Gradient rim */}
+      <div className="absolute inset-0 rounded-full bg-gradient-to-r from-[#3b82f6] via-[#7c3aed] to-[#a855f7]" />
+      {/* Inner body */}
+      <div className="absolute inset-[2px] rounded-full bg-gradient-to-b from-[#161233] to-[#0a0818] flex items-center justify-center">
+        <span className="text-white font-extrabold text-[17px] tracking-wide">
+          Create with{' '}
+          <span className="bg-gradient-to-r from-[#60a5fa] via-[#a78bfa] to-[#e879f9] bg-clip-text text-transparent">
+            AI
+          </span>
+        </span>
+      </div>
+    </button>
+
+    {/* Create Meme - Circle button */}
+    <button
+      onClick={() => navigate('/editor')}
+      className="relative w-14 h-14 shrink-0 rounded-full group"
+    >
+      <div className="absolute -inset-1 rounded-full bg-gradient-to-br from-[#2654d1] to-[#9333ea] opacity-70 blur-md group-hover:opacity-100 transition-opacity pointer-events-none" />
+      <div className="absolute inset-0 rounded-full bg-gradient-to-br from-[#3b82f6] to-[#a855f7]" />
+      <div className="absolute inset-[2px] rounded-full bg-gradient-to-b from-[#161233] to-[#0a0818] flex items-center justify-center">
+        <span className="text-white font-bold text-[10px] leading-[1.15] text-center">
+          Create<br />Meme
+        </span>
+      </div>
+    </button>
+
+  </div>
+</div>
 
 
         </div>
