@@ -1,10 +1,11 @@
 import { useNavigate } from 'react-router-dom'
-import { Sparkles } from 'lucide-react'
 import logoMemeZone from '@assets/Logo/LogoMemeZone.webp'
 import banner1 from '@assets/images/Banners/banner1 (1).webp'
 import banner2 from '@assets/images/Banners/baner2.webp'
 import { GridScan } from '@components/home/GridScan'
 import { useState, useEffect, useRef } from 'react'
+
+import spinHomePageBg from '@assets/images/SpinHomePage.webp'
 
 export function Home() {
   const navigate = useNavigate()
@@ -31,10 +32,21 @@ export function Home() {
   }, [])
 
   return (
-    <div className="space-y-6 bg-[#000000]">
-     
+    <div className="space-y-6 bg-[#000000] pt-4">
+      {/* Daily Challenges Button */}
+      <div className="px-4">
+        <div 
+          onClick={() => navigate('/tasks', { state: { tab: 'spinner' } })} 
+          className="relative w-full h-[120px] rounded-[24px] overflow-hidden cursor-pointer shadow-[0_8px_20px_rgba(0,0,0,0.8)] border border-white/10 group transform active:scale-95 transition-transform bg-cover bg-center bg-no-repeat"
+          style={{ backgroundImage: `url(${spinHomePageBg})` }}
+        >
+        </div>
+      </div>
+
       
- {/* Featured Large Card */}
+
+          
+            {/* Featured Large Card */}
       <div className="-mt-[calc(1rem+env(safe-area-inset-top)+8px)] -mx-4 h-[40dvh] flex flex-col">
         
         {/* Top area with GridScan background */}
@@ -60,55 +72,55 @@ export function Home() {
           </div>
           
           <div className="relative z-10 flex flex-col items-center mt-2">
-            <img src={logoMemeZone} alt="Meme Zone" className="w-36 h-36 object-contain drop-shadow-2xl" />
+            <img src={logoMemeZone} alt="Meme Zone" className="w-60 h-60 object-contain drop-shadow-2xl" />
             <p className="text-white/50 text-xs mt-4">Create viral memes every day!</p>
           </div>
-        </div>
+            </div>
 
         {/* Create Buttons Area */}
-<div className="px-6 pb-6 pt-4 shrink-0">
-  <div className="max-w-sm mx-auto w-full flex items-center gap-3">
+            <div className="px-6 pb-6 pt-4 shrink-0">
+       <div className="max-w-sm mx-auto w-full flex items-center gap-3">
 
-    {/* Create with AI - Pill button */}
-    <button
-      onClick={() => navigate('/editor')}
-      className="relative flex-1 h-14 rounded-full group"
-    >
-      {/* Outer glow */}
-      <div className="absolute -inset-1 rounded-full bg-gradient-to-r from-[#2654d1] via-[#6d3fd6] to-[#9333ea] opacity-70 blur-md group-hover:opacity-100 transition-opacity pointer-events-none" />
-      {/* Gradient rim */}
-      <div className="absolute inset-0 rounded-full bg-gradient-to-r from-[#3b82f6] via-[#7c3aed] to-[#a855f7]" />
-      {/* Inner body */}
-      <div className="absolute inset-[2px] rounded-full bg-gradient-to-b from-[#161233] to-[#0a0818] flex items-center justify-center">
+         {/* Create with AI - Pill button */}
+        <button
+          onClick={() => navigate('/editor')}
+        className="relative flex-1 h-14 rounded-full group"
+        >
+       {/* Outer glow */}
+       <div className="absolute -inset-1 rounded-full bg-gradient-to-r from-[#2654d1] via-[#6d3fd6] to-[#9333ea] opacity-70 blur-md group-hover:opacity-100 transition-opacity pointer-events-none" />
+       {/* Gradient rim */}
+       <div className="absolute inset-0 rounded-full bg-gradient-to-r from-[#3b82f6] via-[#7c3aed] to-[#a855f7]" />
+       {/* Inner body */}
+           <div className="absolute inset-[2px] rounded-full bg-gradient-to-b from-[#161233] to-[#0a0818] flex items-center justify-center">
         <span className="text-white font-extrabold text-[17px] tracking-wide">
           Create with{' '}
           <span className="bg-gradient-to-r from-[#60a5fa] via-[#a78bfa] to-[#e879f9] bg-clip-text text-transparent">
             AI
           </span>
         </span>
-      </div>
-    </button>
+           </div>
+         </button>
 
-    {/* Create Meme - Circle button */}
-    <button
-      onClick={() => navigate('/editor')}
-      className="relative w-14 h-14 shrink-0 rounded-full group"
-    >
-      <div className="absolute -inset-1 rounded-full bg-gradient-to-br from-[#2654d1] to-[#9333ea] opacity-70 blur-md group-hover:opacity-100 transition-opacity pointer-events-none" />
-      <div className="absolute inset-0 rounded-full bg-gradient-to-br from-[#3b82f6] to-[#a855f7]" />
-      <div className="absolute inset-[2px] rounded-full bg-gradient-to-b from-[#161233] to-[#0a0818] flex items-center justify-center">
+            {/* Create Meme - Circle button */}
+        <button
+          onClick={() => navigate('/editor')}
+         className="relative w-14 h-14 shrink-0 rounded-full group"
+        >
+           <div className="absolute -inset-1 rounded-full bg-gradient-to-br from-[#2654d1] to-[#9333ea] opacity-70 blur-md group-hover:opacity-100 transition-opacity pointer-events-none" />
+          <div className="absolute inset-0 rounded-full bg-gradient-to-br from-[#3b82f6] to-[#a855f7]" />
+               <div className="absolute inset-[2px] rounded-full bg-gradient-to-b from-[#161233] to-[#0a0818] flex items-center justify-center">
         <span className="text-white font-bold text-[10px] leading-[1.15] text-center">
           Create<br />Meme
-        </span>
-      </div>
-    </button>
+          </span>
+           </div>
+          </button>
 
-  </div>
-</div>
+          </div>
+        </div>
 
 
         </div>
-      {/* Swipeable Image Banners */}
+     {/* Swipeable Image Banners */}
       <div className="relative w-full flex flex-col items-center">
         <div 
           ref={scrollRef}
@@ -123,11 +135,11 @@ export function Home() {
           }}
         >
           {banners.map((b, i) => (
-            <div key={b.id} className="min-w-full snap-center px-4">
+            <div key={b.id} className="min-w-full snap-center">
               <img 
                 src={b.src} 
                 alt={`Banner ${i + 1}`} 
-                className="w-full h-auto rounded-[20px] shadow-lg cursor-pointer" 
+                className="w-full h-auto shadow-lg cursor-pointer" 
                 onClick={() => navigate('/editor')}
               />
             </div>
@@ -146,25 +158,8 @@ export function Home() {
           ))}
         </div>
       </div>
-     
 
-      <div>
-        <div className="flex justify-between items-center mb-3 px-2">
-          <h2 className="text-lg font-bold">Trending</h2>
-        </div>
-        <div className="flex gap-4 overflow-x-auto pt-3 pb-4 px-2 custom-scrollbar">
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="relative shrink-0">
-              <div className="w-20 h-20 bg-[#2C2C2E] rounded-2xl border border-white/10 flex items-center justify-center">
-                <Sparkles className="text-white/40 w-8 h-8" />
-              </div>
-              <div className="absolute -top-2 -right-2 bg-[#229ED9] text-[11px] font-bold min-w-[1.5rem] h-[1.5rem] flex items-center justify-center px-1.5 rounded-full border-2 border-[#000000] leading-none whitespace-nowrap">
-                {i * 10}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
+    
     </div>
   )
 }

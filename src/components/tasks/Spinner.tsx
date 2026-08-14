@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Gift, Zap, Ticket, Star, Coins } from 'lucide-react'
-import spinnerBg from '@assets/images/spinnerbackground.png'
+import { Gift, Zap, Ticket, Star } from 'lucide-react'
+import spinnerBg from '@assets/images/spinnerbackground.webp'
+import spinnerCenterBut from '@assets/images/SpinnerCenterBut.webp'
 
 const PRIZES = [
   { id: 1, label: '500\nSTARS', color: 'from-[#e49b1a] to-[#f8cd46]', icon: Star, iconColor: 'fill-[#fdf2a6] text-[#e09b10]' }, 
@@ -48,13 +49,17 @@ export function Spinner() {
   }
 
   return (
-    <div 
-      className="flex flex-col items-center justify-center pt-16 pb-24 -mx-1 rounded-3xl bg-cover bg-center bg-no-repeat relative overflow-hidden"
-      style={{ backgroundImage: `url(${spinnerBg})` }}
-    >
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px]" />
+    <>
+      {/* Full-page Background */}
+      <div 
+        className="fixed inset-0 bg-cover bg-center bg-no-repeat -z-10"
+        style={{ backgroundImage: `url(${spinnerBg})` }}
+      >
+        <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px]" />
+      </div>
 
-      {/* Free Spins Badge */}
+      <div className="flex flex-col items-center justify-center pt-8 pb-24 relative w-full">
+        {/* Free Spins Badge */}
       <div className="absolute top-4 right-4 z-20 flex items-center gap-2 bg-[#1c1c1e]/80 backdrop-blur-md border border-white/10 rounded-[12px] px-3 py-1.5 shadow-[0_4px_12px_rgba(0,0,0,0.4)]">
         <Gift size={14} className="text-[#229ED9]" />
         <div className="flex flex-col">
@@ -174,30 +179,20 @@ export function Spinner() {
             
           </motion.div>
 
-          {/* Center hub (Moved outside rotation so it stays steady) */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[76px] h-[76px] bg-[#0c101a] rounded-full border-[3px] border-[#091538] shadow-[0_0_15px_rgba(0,0,0,0.9)] z-20 flex flex-col items-center justify-center pt-1 pb-0.5">
-            <span className="text-[9px] font-bold text-white/40 tracking-wider">COST</span>
-            <span className="text-[20px] font-black text-white leading-none drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">100</span>
-            <Coins size={12} className="text-[#f5a623] mt-1 drop-shadow-md" />
-          </div>
+          {/* Center hub - Spin Button */}
+          <motion.button
+            onClick={handleSpin}
+            disabled={spinning}
+            whileTap={{ scale: 0.9 }}
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[86px] h-[86px] rounded-full shadow-[0_0_20px_rgba(0,0,0,0.9)] z-20 flex items-center justify-center bg-cover bg-center bg-no-repeat overflow-hidden border-2 border-transparent transition-transform"
+            style={{ backgroundImage: `url(${spinnerCenterBut})` }}
+          >
+            <div className={`absolute inset-0 bg-white/20 transition-opacity ${spinning ? 'opacity-100' : 'opacity-0'}`} />
+          </motion.button>
         </div>
 
-        {/* Spin Button */}
-        <motion.button
-          onClick={handleSpin}
-          disabled={spinning}
-          animate={spinning ? { scale: 1 } : { scale: [1, 1.02, 1] }}
-          transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
-          whileTap={{ scale: 0.95 }}
-          className="relative px-12 py-5 rounded-[16px] font-black text-[28px] italic text-white w-full max-w-[280px] mt-2 outline-none pb-6"
-        >
-          <div className="absolute inset-0 bg-gradient-to-b from-[#3a7bf5] to-[#1242b5] rounded-[16px] shadow-[0_8px_0_#092673,0_15px_20px_rgba(0,0,0,0.5)] border-[2px] border-[#5e96ff]" />
-          <div className={`absolute inset-0 bg-white/20 rounded-[16px] transition-opacity ${spinning ? 'opacity-100' : 'opacity-0'}`} />
-          <div className="relative z-10 flex items-center justify-center gap-2 drop-shadow-[0_2px_2px_rgba(0,0,0,0.5)] mt-1">
-            SPIN NOW! <Zap size={24} className="fill-white" />
-          </div>
-        </motion.button>
       </div>
-    </div>
+      </div>
+    </>
   )
 }

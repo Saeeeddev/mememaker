@@ -9,7 +9,7 @@ export function BottomNav() {
   const navItems = [
     { path: '/shop', label: 'Shop', icon: ShoppingBag, disabled: false },
     { path: '/', label: 'Home', icon: Home, disabled: false },
-    { path: '/tasks', label: 'Task', icon: Zap, disabled: false },
+    { path: '/tasks', label: 'Earn', icon: Zap, disabled: false },
     { path: '/profile', label: 'Profile', icon: User, disabled: false },
   ]
 
