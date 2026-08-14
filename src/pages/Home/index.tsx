@@ -1,11 +1,12 @@
 import { useNavigate } from 'react-router-dom'
+import { Sparkles } from 'lucide-react'
 import logoMemeZone from '@assets/Logo/LogoMemeZone.webp'
 import banner1 from '@assets/images/Banners/banner1 (1).webp'
 import banner2 from '@assets/images/Banners/baner2.webp'
 import { GridScan } from '@components/home/GridScan'
 import { useState, useEffect, useRef } from 'react'
 
-import spinHomePageBg from '@assets/images/SpinHomePage.webp'
+import spinnerBg from '@assets/images/spinnerbackground.png'
 
 export function Home() {
   const navigate = useNavigate()
@@ -36,10 +37,26 @@ export function Home() {
       {/* Daily Challenges Button */}
       <div className="px-4">
         <div 
-          onClick={() => navigate('/tasks', { state: { tab: 'spinner' } })} 
-          className="relative w-full h-[120px] rounded-[24px] overflow-hidden cursor-pointer shadow-[0_8px_20px_rgba(0,0,0,0.8)] border border-white/10 group transform active:scale-95 transition-transform bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: `url(${spinHomePageBg})` }}
+          onClick={() => navigate('/tasks')} 
+          className="relative w-full h-[96px] rounded-3xl overflow-hidden cursor-pointer shadow-[0_8px_20px_rgba(0,0,0,0.8)] border border-white/10 group transform active:scale-95 transition-transform"
+          style={{ backgroundImage: `url(${spinnerBg})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
         >
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] group-hover:bg-black/30 transition-colors" />
+          
+          <div className="relative z-10 w-full h-full flex items-center justify-between px-6">
+            <div className="flex flex-col justify-center">
+              <span className="text-[#f5a623] font-black text-[11px] uppercase tracking-[0.1em] mb-1 drop-shadow-md">
+                Earn More
+              </span>
+              <span className="text-white font-black text-[24px] italic leading-none drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">
+                DAILY CHALLENGES
+              </span>
+            </div>
+            
+            <div className="w-[52px] h-[52px] bg-gradient-to-b from-[#3a7bf5] to-[#1242b5] rounded-[16px] shadow-[0_6px_0_#092673,0_8px_15px_rgba(0,0,0,0.5)] border-[2px] border-[#5e96ff] flex items-center justify-center -rotate-6 group-hover:rotate-0 transition-transform">
+              <Sparkles size={24} className="fill-white text-white drop-shadow-[0_2px_2px_rgba(0,0,0,0.5)]" />
+            </div>
+          </div>
         </div>
       </div>
 
@@ -72,7 +89,7 @@ export function Home() {
           </div>
           
           <div className="relative z-10 flex flex-col items-center mt-2">
-            <img src={logoMemeZone} alt="Meme Zone" className="w-60 h-60 object-contain drop-shadow-2xl" />
+            <img src={logoMemeZone} alt="Meme Zone" className="w-50 h-50 object-contain drop-shadow-2xl" />
             <p className="text-white/50 text-xs mt-4">Create viral memes every day!</p>
           </div>
             </div>

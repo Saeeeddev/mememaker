@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Gift, Zap, Ticket, Star } from 'lucide-react'
-import spinnerBg from '@assets/images/spinnerbackground.webp'
+import spinnerBg from '@assets/images/SpinnerBackgroundPage.webp'
 import spinnerCenterBut from '@assets/images/SpinnerCenterBut.webp'
 
 const PRIZES = [
@@ -49,16 +49,11 @@ export function Spinner() {
   }
 
   return (
-    <>
-      {/* Full-page Background */}
-      <div 
-        className="fixed inset-0 bg-cover bg-center bg-no-repeat -z-10"
-        style={{ backgroundImage: `url(${spinnerBg})` }}
-      >
-        <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px]" />
-      </div>
-
-      <div className="flex flex-col items-center justify-center pt-8 pb-24 relative w-full">
+    <div 
+      className="flex flex-col items-center justify-center pt-16 pb-24 -mx-1 rounded-3xl bg-cover bg-center bg-no-repeat relative overflow-hidden"
+      style={{ backgroundImage: `url(${spinnerBg})` }}
+    >
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px]" />
         {/* Free Spins Badge */}
       <div className="absolute top-4 right-4 z-20 flex items-center gap-2 bg-[#1c1c1e]/80 backdrop-blur-md border border-white/10 rounded-[12px] px-3 py-1.5 shadow-[0_4px_12px_rgba(0,0,0,0.4)]">
         <Gift size={14} className="text-[#229ED9]" />
@@ -192,7 +187,6 @@ export function Spinner() {
         </div>
 
       </div>
-      </div>
-    </>
+    </div>
   )
 }

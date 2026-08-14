@@ -7,9 +7,9 @@ import { TasksSkeleton } from '@components/skeletons/TasksSkeleton'
 import { Spinner } from '@components/tasks/Spinner'
 import { WatchAds } from '@components/tasks/WatchAds'
 
-import tasksBtnImg from '@assets/images/TasksButton.webp'
+import tasksBtnImg from '@assets/images/TasksButtonMain.webp'
 import watchAdsBtnImg from '@assets/images/WatchAddsMain.webp'
-import dailySpinBtnImg from '@assets/images/DailySpinButton.webp'
+import dailySpinBtnImg from '@assets/images/DailySpinMain.webp'
 
 type Tab = 'earn' | 'ads' | 'spinner' | 'tasks'
 
@@ -26,9 +26,9 @@ export function Tasks() {
   const completedCount = tasks.filter(t => t.completed).length
 
   return (
-    <div className="pt-2 px-1 pb-24">
+    <div className={`pt-2 px-1 ${activeTab === 'earn' ? 'pb-[80px]' : 'pb-24'}`}>
       {/* Page Header */}
-      <div className="mb-4 flex items-center justify-between px-2">
+      <div className="mb-4 flex items-center justify-between px-2 shrink-0">
         <h1 className="text-[28px] font-black text-white italic">EARN</h1>
         {activeTab === 'tasks' && (
           <div className="rounded-full bg-gradient-to-r from-[#f5a623] to-[#f8cd46] px-4 py-1 text-[13px] font-black text-[#1a1a1a] shadow-[0_2px_8px_rgba(245,166,35,0.4)]">
@@ -39,7 +39,7 @@ export function Tasks() {
 
       {/* Custom Tabs (Hidden on main menu) */}
       {activeTab !== 'earn' && (
-        <div className="flex gap-1 mb-6 bg-white/5 p-1.5 rounded-[20px] mx-2 overflow-x-auto [&::-webkit-scrollbar]:hidden">
+        <div className="flex gap-1 mb-6 bg-white/5 p-1.5 rounded-[20px] mx-2 overflow-x-auto [&::-webkit-scrollbar]:hidden shrink-0">
           {['ads', 'spinner', 'tasks'].map((tab) => (
             <button
               key={tab}
@@ -63,7 +63,7 @@ export function Tasks() {
 
       {/* Tab Content */}
       {activeTab === 'earn' && (
-        <div className="flex flex-col gap-5 mt-8 px-2">
+        <div className="flex flex-col gap-5 mt-4 px-2">
           <motion.button
             whileTap={{ scale: 0.95 }}
             onClick={() => setActiveTab('ads')}
