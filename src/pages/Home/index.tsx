@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { Sparkles } from 'lucide-react'
 import logoMemeZone from '@assets/Logo/LogoMemeZone.webp'
 import banner1 from '@assets/images/Banners/banner1 (1).webp'
@@ -10,6 +11,7 @@ import spinnerBg from '@assets/images/spinnerbackground.png'
 
 export function Home() {
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const [currentBanner, setCurrentBanner] = useState(0)
   const scrollRef = useRef<HTMLDivElement>(null)
   
@@ -46,10 +48,10 @@ export function Home() {
           <div className="relative z-10 w-full h-full flex items-center justify-between px-6">
             <div className="flex flex-col justify-center">
               <span className="text-[#f5a623] font-black text-[11px] uppercase tracking-[0.1em] mb-1 drop-shadow-md">
-                Earn More
+                {t('home.earn_more')}
               </span>
               <span className="text-white font-black text-[24px] italic leading-none drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">
-                DAILY CHALLENGES
+                {t('home.daily_challenges')}
               </span>
             </div>
             
@@ -90,7 +92,7 @@ export function Home() {
           
           <div className="relative z-10 flex flex-col items-center mt-2">
             <img src={logoMemeZone} alt="Meme Zone" className="w-50 h-50 object-contain drop-shadow-2xl" />
-            <p className="text-white/50 text-xs mt-4">Create viral memes every day!</p>
+            <p className="text-white/50 text-xs mt-4">{t('home.create_viral_memes')}</p>
           </div>
             </div>
 
@@ -110,10 +112,7 @@ export function Home() {
        {/* Inner body */}
            <div className="absolute inset-[2px] rounded-full bg-gradient-to-b from-[#161233] to-[#0a0818] flex items-center justify-center">
         <span className="text-white font-extrabold text-[17px] tracking-wide">
-          Create with{' '}
-          <span className="bg-gradient-to-r from-[#60a5fa] via-[#a78bfa] to-[#e879f9] bg-clip-text text-transparent">
-            AI
-          </span>
+          {t('home.create_with_ai')}
         </span>
            </div>
          </button>
@@ -127,7 +126,7 @@ export function Home() {
           <div className="absolute inset-0 rounded-full bg-gradient-to-br from-[#3b82f6] to-[#a855f7]" />
                <div className="absolute inset-[2px] rounded-full bg-gradient-to-b from-[#161233] to-[#0a0818] flex items-center justify-center">
         <span className="text-white font-bold text-[10px] leading-[1.15] text-center">
-          Create<br />Meme
+          {t('home.create_meme')}
           </span>
            </div>
           </button>

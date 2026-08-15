@@ -3,19 +3,21 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Gift, Zap, Ticket, Star } from 'lucide-react'
 import spinnerBg from '@assets/images/SpinnerBackgroundPage.webp'
 import spinnerCenterBut from '@assets/images/SpinnerCenterBut.webp'
+import { useTranslation } from 'react-i18next'
 
 const PRIZES = [
-  { id: 1, label: '500\nSTARS', color: 'from-[#e49b1a] to-[#f8cd46]', icon: Star, iconColor: 'fill-[#fdf2a6] text-[#e09b10]' }, 
-  { id: 2, label: 'DAILY\nPREMIUM', color: 'from-[#0d2a71] to-[#1a51cf]', icon: Gift, iconColor: 'fill-[#519ee7] text-[#8cd6ff]' },
-  { id: 3, label: 'SPIN\nAGAIN', color: 'from-[#1b1c20] to-[#363840]', icon: Ticket, iconColor: 'fill-[#a5a9b4] text-[#cfd3dd]' },
-  { id: 4, label: '100\nSTARS', color: 'from-[#e49b1a] to-[#f8cd46]', icon: Star, iconColor: 'fill-[#fdf2a6] text-[#e09b10]' },
-  { id: 5, label: '5\nENERGY', color: 'from-[#0d2a71] to-[#1a51cf]', icon: Zap, iconColor: 'fill-[#519ee7] text-[#8cd6ff]' },
-  { id: 6, label: 'MYSTERY\nREWARD', color: 'from-[#1b1c20] to-[#363840]', icon: Gift, iconColor: 'fill-[#519ee7] text-[#8cd6ff]' },
-  { id: 7, label: '250\nSTARS', color: 'from-[#e49b1a] to-[#f8cd46]', icon: Star, iconColor: 'fill-[#fdf2a6] text-[#e09b10]' },
-  { id: 8, label: '10\nENERGY', color: 'from-[#0d2a71] to-[#1a51cf]', icon: Zap, iconColor: 'fill-[#519ee7] text-[#8cd6ff]' },
+  { id: 1, labelKey: 'prize_500_stars', color: 'from-[#e49b1a] to-[#f8cd46]', icon: Star, iconColor: 'fill-[#fdf2a6] text-[#e09b10]' }, 
+  { id: 2, labelKey: 'prize_daily_premium', color: 'from-[#0d2a71] to-[#1a51cf]', icon: Gift, iconColor: 'fill-[#519ee7] text-[#8cd6ff]' },
+  { id: 3, labelKey: 'prize_spin_again', color: 'from-[#1b1c20] to-[#363840]', icon: Ticket, iconColor: 'fill-[#a5a9b4] text-[#cfd3dd]' },
+  { id: 4, labelKey: 'prize_100_stars', color: 'from-[#e49b1a] to-[#f8cd46]', icon: Star, iconColor: 'fill-[#fdf2a6] text-[#e09b10]' },
+  { id: 5, labelKey: 'prize_5_energy', color: 'from-[#0d2a71] to-[#1a51cf]', icon: Zap, iconColor: 'fill-[#519ee7] text-[#8cd6ff]' },
+  { id: 6, labelKey: 'prize_mystery', color: 'from-[#1b1c20] to-[#363840]', icon: Gift, iconColor: 'fill-[#519ee7] text-[#8cd6ff]' },
+  { id: 7, labelKey: 'prize_250_stars', color: 'from-[#e49b1a] to-[#f8cd46]', icon: Star, iconColor: 'fill-[#fdf2a6] text-[#e09b10]' },
+  { id: 8, labelKey: 'prize_10_energy', color: 'from-[#0d2a71] to-[#1a51cf]', icon: Zap, iconColor: 'fill-[#519ee7] text-[#8cd6ff]' },
 ]
 
 export function Spinner() {
+  const { t } = useTranslation()
   const [spinning, setSpinning] = useState(false)
   const [rotation, setRotation] = useState(0)
   const [wonPrize, setWonPrize] = useState<typeof PRIZES[0] | null>(null)
@@ -49,17 +51,28 @@ export function Spinner() {
   }
 
   return (
-    <div 
-      className="flex flex-col items-center justify-center pt-16 pb-24 -mx-1 rounded-3xl bg-cover bg-center bg-no-repeat relative overflow-hidden"
-      style={{ backgroundImage: `url(${spinnerBg})` }}
-    >
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px]" />
+    <div className="flex flex-col items-center justify-center pt-16 pb-24 -mx-1 relative">
+      {/* Faded Background Wrapper */}
+      <div 
+        className="absolute inset-0 -z-10"
+        style={{
+          maskImage: 'radial-gradient(ellipse at center, black 45%, transparent 100%)',
+          WebkitMaskImage: 'radial-gradient(ellipse at center, black 45%, transparent 100%)'
+        }}
+      >
+        <div 
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{ backgroundImage: `url(${spinnerBg})` }}
+        />
+        {/* Dim overlay */}
+        <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px]" />
+      </div>
         {/* Free Spins Badge */}
       <div className="absolute top-4 right-4 z-20 flex items-center gap-2 bg-[#1c1c1e]/80 backdrop-blur-md border border-white/10 rounded-[12px] px-3 py-1.5 shadow-[0_4px_12px_rgba(0,0,0,0.4)]">
         <Gift size={14} className="text-[#229ED9]" />
         <div className="flex flex-col">
-          <span className="text-[10px] font-bold text-white/60 leading-tight uppercase tracking-wider">Free Spins</span>
-          <span className="text-[12px] font-black text-white leading-tight">2 of 2</span>
+          <span className="text-[10px] font-bold text-white/60 leading-tight uppercase tracking-wider">{t('tasks.free_spins')}</span>
+          <span className="text-[12px] font-black text-white leading-tight">{t('tasks.spins_count', { current: 2, total: 2 })}</span>
         </div>
       </div>
       
@@ -83,15 +96,15 @@ export function Spinner() {
               <div className="w-24 h-24 rounded-full bg-gradient-to-tr from-[#0a1b4d] to-[#1a3b85] flex items-center justify-center mb-5 shadow-[0_0_20px_rgba(34,158,217,0.5)] border-4 border-[#229ED9]">
                 <wonPrize.icon className={`w-12 h-12 ${wonPrize.iconColor} drop-shadow-lg`} />
               </div>
-              <h2 className="text-2xl font-black text-white mb-2">YOU WON!</h2>
+              <h2 className="text-2xl font-black text-white mb-2">{t('tasks.you_won')}</h2>
               <p className="text-xl font-bold text-[#f5a623] mb-8 leading-tight">
-                {wonPrize.label.replace('\n', ' ')}
+                {t(`tasks.${wonPrize.labelKey}`).replace('\n', ' ')}
               </p>
               <button
                 onClick={() => setWonPrize(null)}
                 className="w-full py-4 rounded-xl font-black text-white bg-gradient-to-r from-[#229ED9] to-[#2ab6f6] shadow-[0_4px_15px_rgba(34,158,217,0.4)] active:scale-95 transition-transform"
               >
-                CLAIM
+                {t('tasks.claim')}
               </button>
             </motion.div>
           </motion.div>
@@ -163,7 +176,7 @@ export function Spinner() {
                       className="text-white font-black text-[12px] leading-[1.1] text-center" 
                       style={{ textShadow: '0 2px 4px rgba(0,0,0,0.8), 0 0 2px rgba(0,0,0,1)' }}
                     >
-                      {prize.label.split('\n').map((line, j) => (
+                      {t(`tasks.${prize.labelKey}`).split('\n').map((line, j) => (
                         <div key={j}>{line}</div>
                       ))}
                     </span>

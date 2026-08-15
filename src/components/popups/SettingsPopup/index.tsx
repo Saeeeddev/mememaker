@@ -1,11 +1,19 @@
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Globe, Smartphone } from 'lucide-react'
 import { useAppStore } from '@store/useAppStore'
+import { useTranslation } from 'react-i18next'
 
 export const SettingsPopup = () => {
   const { settingsOpen, closeSettings, language, setLanguage, hapticFeedback, toggleHapticFeedback } = useAppStore()
+  const { t, i18n } = useTranslation()
 
-  const languages: ('RU' | 'EN' | 'ZH')[] = ['RU', 'EN', 'ZH']
+  const languages: ('EN' | 'RU')[] = ['EN', 'RU']
+
+  const handleLanguageChange = (lang: 'EN' | 'RU') => {
+    setLanguage(lang)
+    i18n.changeLanguage(lang.toLowerCase())
+    localStorage.setItem('language', lang.toLowerCase())
+  }
 
   return (
     <AnimatePresence>
@@ -31,7 +39,7 @@ export const SettingsPopup = () => {
             {/* Header */}
             <div className="flex items-center justify-between mb-6">
               <div className="w-8" /> {/* Spacer */}
-              <h2 className="text-white font-bold text-xl">Settings</h2>
+              <h2 className="text-white font-bold text-xl">{t('popups.settings')}</h2>
               <button 
                 onClick={closeSettings}
                 className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white/70 hover:bg-white/20 transition-colors"
@@ -45,14 +53,14 @@ export const SettingsPopup = () => {
               <div className="bg-[#151522] rounded-2xl p-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <Globe className="text-[#229ED9]" size={20} />
-                  <span className="text-white font-medium">Language</span>
+                  <span className="text-white font-medium">{t('popups.language')}</span>
                 </div>
                 
                 <div className="flex items-center bg-black rounded-xl p-1">
                   {languages.map((lang) => (
                     <button
                       key={lang}
-                      onClick={() => setLanguage(lang)}
+                      onClick={() => handleLanguageChange(lang)}
                       className={`px-3 py-1 rounded-lg text-sm font-bold transition-colors ${
                         language === lang 
                           ? 'bg-[#229ED9] text-white' 

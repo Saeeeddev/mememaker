@@ -1,10 +1,12 @@
 import { useShop } from '@hooks/useShop'
+import { useTranslation } from 'react-i18next'
 import { ShopItem } from '@components/shop/ShopItem'
 import { ShopSkeleton } from '@components/skeletons/ShopSkeleton'
 import { Store } from 'lucide-react'
 
 export function Shop() {
   const { items, loading } = useShop()
+  const { t } = useTranslation()
 
   if (loading) return <ShopSkeleton />
 
@@ -14,8 +16,8 @@ export function Shop() {
         <div className="w-16 h-16 bg-purple-500/20 rounded-full flex items-center justify-center mb-4">
           <Store className="w-8 h-8 text-purple-400" />
         </div>
-        <h1 className="text-3xl font-bold mb-2">Shop</h1>
-        <p className="text-white/50 text-sm">Upgrade your meme arsenal</p>
+        <h1 className="text-3xl font-bold mb-2">{t('shop.title')}</h1>
+        <p className="text-white/50 text-sm">{t('shop.subtitle')}</p>
       </div>
 
       <div className="grid grid-cols-2 gap-3 px-2">

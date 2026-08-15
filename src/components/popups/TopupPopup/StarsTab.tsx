@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import starsIcon from '@assets/icons/Stars.webp'
+import { useTranslation } from 'react-i18next'
 
 export const StarsTab = () => {
+  const { t } = useTranslation()
   const [amount, setAmount] = useState('0')
   const presets = [25, 50, 100, 250, 500, 1000, 2500, 5000]
   const displayAmount = amount || '0'
@@ -24,12 +26,12 @@ export const StarsTab = () => {
       {/* Stars Pill */}
       <div className="bg-[#191b1b] rounded-[18px] px-9 py-5 flex items-center gap-3 mb-8 shadow-[0_0_24px_rgba(34,158,217,0.18)] border border-[#229ED9]/20">
         <img src={starsIcon} alt="Stars" className="w-6 h-6 drop-shadow-[0_0_9px_rgba(255,170,30,0.55)]" />
-        <span className="text-white font-extrabold">Stars</span>
+        <span className="text-white font-extrabold">{t('popups.stars')}</span>
       </div>
 
       {/* Input Area */}
       <div className="flex flex-col items-center mb-8 w-full">
-        <span className="text-[#168AC0] text-[15px] font-semibold mb-3">Enter amount</span>
+        <span className="text-[#168AC0] text-[15px] font-semibold mb-3">{t('popups.enter_amount')}</span>
         <div className="flex items-center justify-center min-h-[86px] w-full overflow-hidden">
           <input 
             type="text" 
@@ -70,7 +72,7 @@ export const StarsTab = () => {
           hover:bg-[#2AABEE] active:scale-[0.98]
           disabled:opacity-35 disabled:cursor-not-allowed disabled:shadow-none"
       >
-        <span className="flex items-center justify-center gap-1.5">Top Up <img src={starsIcon} alt="Stars" className="w-4 h-4" /> {parseInt(amount) > 0 ? parseInt(amount).toLocaleString() : ''} Stars</span>
+        <span className="flex items-center justify-center gap-1.5">{t('popups.top_up')} <img src={starsIcon} alt="Stars" className="w-4 h-4" /> {parseInt(amount) > 0 ? parseInt(amount).toLocaleString() : ''} {t('popups.stars')}</span>
       </button>
     </div>
   )

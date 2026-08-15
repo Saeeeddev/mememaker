@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
 import { motion } from 'framer-motion'
+import { useTranslation } from 'react-i18next'
 import { useTasks } from '@hooks/useTasks'
 import { TaskList } from '@components/tasks/TaskList'
 import { TasksSkeleton } from '@components/skeletons/TasksSkeleton'
@@ -15,11 +16,32 @@ type Tab = 'earn' | 'ads' | 'spinner' | 'tasks'
 
 export function Tasks() {
   const { tasks, loading } = useTasks()
+  const { t } = useTranslation()
   const location = useLocation()
   
   // Default to 'earn' menu unless specific tab requested via state
   const initialTab = location.state?.tab === 'spinner' ? 'spinner' : 'earn'
   const [activeTab, setActiveTab] = useState<Tab>(initialTab)
+
+  useEffect(() => {
+    const main = document.getElementById('main-scroll-container')
+    
+    if (activeTab === 'earn' || activeTab === 'spinner') {
+      document.body.style.overflow = 'hidden'
+      document.documentElement.style.overflow = 'hidden'
+      if (main) main.style.overflowY = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+      document.documentElement.style.overflow = ''
+      if (main) main.style.overflowY = 'auto'
+    }
+
+    return () => {
+      document.body.style.overflow = ''
+      document.documentElement.style.overflow = ''
+      if (main) main.style.overflowY = 'auto'
+    }
+  }, [activeTab])
 
   if (loading) return <TasksSkeleton />
 
@@ -29,7 +51,7 @@ export function Tasks() {
     <div className={`pt-2 px-1 ${activeTab === 'earn' ? 'pb-[80px]' : 'pb-24'}`}>
       {/* Page Header */}
       <div className="mb-4 flex items-center justify-between px-2 shrink-0">
-        <h1 className="text-[28px] font-black text-white italic">EARN</h1>
+        <h1 className="text-[28px] font-black text-white italic">{t('tasks.earn')}</h1>
         {activeTab === 'tasks' && (
           <div className="rounded-full bg-gradient-to-r from-[#f5a623] to-[#f8cd46] px-4 py-1 text-[13px] font-black text-[#1a1a1a] shadow-[0_2px_8px_rgba(245,166,35,0.4)]">
             {completedCount}/{tasks.length}
@@ -55,7 +77,7 @@ export function Tasks() {
                   transition={{ type: 'spring', stiffness: 300, damping: 30 }}
                 />
               )}
-              {tab === 'ads' ? 'Watch Ads' : tab === 'spinner' ? 'Spinner' : 'Tasks'}
+              {tab === 'ads' ? t('tasks.watch_ads') : tab === 'spinner' ? t('tasks.spinner') : t('tasks.tasks_tab')}
             </button>
           ))}
         </div>

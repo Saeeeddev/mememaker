@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Sparkles, Loader2 } from 'lucide-react'
 import { GoogleGenAI, Type } from '@google/genai'
+import { useTranslation } from 'react-i18next'
 
 interface AIPanelProps {
   open: boolean
@@ -16,6 +17,7 @@ export function AIPanel({ open, templateId, templateImageUrl, onApply, onClose }
   const [prompt, setPrompt] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const { t } = useTranslation()
 
   const handleGenerate = async () => {
     if (!prompt.trim()) return
@@ -171,18 +173,18 @@ export function AIPanel({ open, templateId, templateImageUrl, onApply, onClose }
             {/* Title + close */}
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-white font-bold text-[16px] flex items-center gap-2">
-                <Sparkles size={18} className="text-violet-400" /> AI Generator
+                <Sparkles size={18} className="text-violet-400" /> {t('editor.ai_generator')}
               </h3>
               <button
                 onClick={onClose}
                 className="px-4 py-1.5 rounded-[12px] bg-white/10 text-white font-bold text-[14px] hover:bg-white/15 active:scale-[0.97] transition-all"
               >
-                Cancel
+                {t('editor.cancel')}
               </button>
             </div>
             
             <p className="text-white/50 text-[13px] mb-4 leading-relaxed">
-              Type what you want the meme to be about, and our AI will write the perfect text for you!
+              {t('editor.ai_prompt_hint')}
             </p>
 
             {/* Prompt input */}
@@ -190,7 +192,7 @@ export function AIPanel({ open, templateId, templateImageUrl, onApply, onClose }
               value={prompt}
               onChange={e => setPrompt(e.target.value)}
               rows={3}
-              placeholder="e.g. When you finally fix a bug after 3 hours but create 5 new ones..."
+              placeholder={t('editor.ai_placeholder')}
               className="w-full bg-[#1c1c1e] border border-white/10 rounded-[14px] px-3.5 py-3 text-white text-[14px] font-medium placeholder-white/25 outline-none resize-none mb-4 focus:border-violet-500/50 transition-colors"
             />
             
@@ -204,12 +206,12 @@ export function AIPanel({ open, templateId, templateImageUrl, onApply, onClose }
               {isLoading ? (
                 <>
                   <Loader2 className="w-5 h-5 animate-spin" />
-                  Generating...
+                  {t('editor.generating')}
                 </>
               ) : (
                 <>
                   <Sparkles size={18} />
-                  Generate Meme Text
+                  {t('editor.generate_meme_text')}
                 </>
               )}
             </button>

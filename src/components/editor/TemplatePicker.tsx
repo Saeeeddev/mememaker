@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react'
 import { Search, Upload, Check, Clock, TrendingUp } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { BLANK_IMAGE, type MemeTemplate } from './types'
+import { useTranslation } from 'react-i18next'
 
 const PER_PAGE = 20
 
@@ -39,6 +40,7 @@ export function TemplatePicker({
   onOpenTopup,
 }: TemplatPickerProps) {
   const [activeTab, setActiveTab] = useState<'trending' | 'recent'>('trending')
+  const { t } = useTranslation()
 
   const recentUrls = useMemo(() => {
     try {
@@ -62,8 +64,8 @@ export function TemplatePicker({
       {/* Header */}
       <div className="flex items-center justify-between px-4 pt-5 pb-3">
         <div>
-          <h1 className="text-white font-bold text-[22px] mb-0.5">Meme Zone </h1>
-          <p className="text-white/40 text-[13px]">Pick a template or upload your own image</p>
+          <h1 className="text-white font-bold text-[22px] mb-0.5">{t('editor.meme_zone')} </h1>
+          <p className="text-white/40 text-[13px]">{t('editor.pick_template_or_upload')}</p>
         </div>
         <button
           onClick={onOpenTopup}
@@ -87,7 +89,7 @@ export function TemplatePicker({
           className="w-full flex items-center justify-center gap-2.5 py-3 rounded-[16px] bg-[#1a1a1d] border border-dashed border-white/20 text-white/70 hover:border-[#229ED9]/60 hover:text-[#229ED9] transition-all text-[14px] font-semibold"
         >
           <Upload size={18} />
-          Upload from Gallery
+          {t('editor.upload_from_gallery')}
         </button>
       </div>
 
@@ -98,7 +100,7 @@ export function TemplatePicker({
           <input
             value={searchQ}
             onChange={e => setSearchQ(e.target.value)}
-            placeholder="Search meme templates..."
+            placeholder={t('editor.search_meme_templates')}
             className="flex-1 bg-transparent text-white text-[14px] placeholder-white/30 outline-none"
           />
         </div>
@@ -115,7 +117,7 @@ export function TemplatePicker({
           }`}
         >
           <TrendingUp size={16} />
-          Trending
+          {t('editor.trending')}
         </button>
         <button
           onClick={() => { setActiveTab('recent'); setPage(() => 1); }}
@@ -126,7 +128,7 @@ export function TemplatePicker({
           }`}
         >
           <Clock size={16} />
-          Recent
+          {t('editor.recent')}
         </button>
       </div>
 
@@ -153,7 +155,7 @@ export function TemplatePicker({
                     : 'border-transparent'
                 }`}
               >
-                <span className="text-black/30 font-bold text-sm">BLANK</span>
+                <span className="text-black/30 font-bold text-sm">{t('editor.blank')}</span>
                 {selectedSrc === BLANK_IMAGE && (
                   <div className="absolute inset-0 bg-[#229ED9]/20 flex items-center justify-center">
                     <div className="w-7 h-7 rounded-full bg-[#229ED9] flex items-center justify-center">
@@ -196,7 +198,7 @@ export function TemplatePicker({
                 onClick={() => setPage(p => p + 1)}
                 className="w-full mt-4 py-3 rounded-[14px] bg-[#141416] border border-white/10 text-white/60 text-[13px] font-semibold hover:bg-[#1c1c1e] transition-colors"
               >
-                Load more
+                {t('editor.load_more')}
               </button>
             )}
           </>
@@ -216,7 +218,7 @@ export function TemplatePicker({
               onClick={() => selectedSrc && onNext(selectedSrc)}
               className="w-full py-3.5 rounded-[16px] bg-[#229ED9] text-white font-bold text-[15px] shadow-[0_8px_24px_rgba(34,158,217,0.4)] active:scale-[0.98] transition-transform"
             >
-              Next Step →
+              {t('editor.next_step')}
             </button>
           </motion.div>
         )}

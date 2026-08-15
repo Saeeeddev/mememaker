@@ -1,7 +1,7 @@
 import { useRef, useEffect } from 'react'
 import { RotateCw, Crop, Pencil, Layers as LayersIcon, Type, Sparkles, Maximize, Edit2, Undo2, Redo2 } from 'lucide-react'
-import watermarkHorizontalSrc from '../../assets/images/WatermarckMemeZone.webp'
-import watermarkVerticalSrc from '../../assets/images/Watermark.webp'
+import watermarkSrc from '../../assets/images/WaterMarkSmallOne.webp'
+import { useTranslation } from 'react-i18next'
 
 /* Fabric loaded via CDN in index.html */
 declare global {
@@ -95,6 +95,8 @@ export function EditorCanvas({
   isFullScreen,
   onToggleFullScreen,
 }: EditorCanvasProps) {
+  const { t } = useTranslation()
+
   // When draw mode toggles, also open settings if turning on
   const handleToggleDraw = () => {
     onToggleDraw()
@@ -167,7 +169,7 @@ export function EditorCanvas({
         {/* Draw button */}
         <button
           onClick={handleToggleDraw}
-          title="Draw"
+          title={t('editor.draw')}
           className={`relative w-12 h-12 rounded-[14px] flex flex-col items-center justify-center gap-0.5 transition-all active:scale-[0.95] border ${
             isDrawingMode
               ? 'bg-[#229ED9]/25 border-[#229ED9]/60 text-[#229ED9] shadow-[0_0_12px_rgba(34,158,217,0.3)]'
@@ -175,7 +177,7 @@ export function EditorCanvas({
           }`}
         >
           <Pencil size={17} />
-          <span className={`text-[8px] font-semibold tracking-wide ${isDrawingMode ? 'text-[#229ED9]' : 'text-white/40'}`}>Draw</span>
+          <span className={`text-[8px] font-semibold tracking-wide ${isDrawingMode ? 'text-[#229ED9]' : 'text-white/40'}`}>{t('editor.draw')}</span>
           {isDrawingMode && (
             <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-[#229ED9] shadow-[0_0_6px_#229ED9]" />
           )}
@@ -184,43 +186,43 @@ export function EditorCanvas({
         {/* Rotate button */}
         <button
           onClick={onRotate}
-          title="Rotate"
+          title={t('editor.rotate')}
           className="w-12 h-12 rounded-[14px] bg-[#1c1c1e] border border-white/10 flex flex-col items-center justify-center gap-0.5 text-white/60 hover:bg-[#252528] hover:text-white/90 hover:border-white/20 active:scale-[0.95] transition-all"
         >
           <RotateCw size={17} />
-          <span className="text-[8px] font-semibold tracking-wide text-white/40">Rotate</span>
+          <span className="text-[8px] font-semibold tracking-wide text-white/40">{t('editor.rotate')}</span>
         </button>
 
         {/* Crop button */}
         <button
           onClick={onCrop}
-          title="Crop"
+          title={t('editor.crop')}
           className="w-12 h-12 rounded-[14px] bg-[#1c1c1e] border border-white/10 flex flex-col items-center justify-center gap-0.5 text-white/60 hover:bg-[#252528] hover:text-white/90 hover:border-white/20 active:scale-[0.95] transition-all"
         >
           <Crop size={17} />
-          <span className="text-[8px] font-semibold tracking-wide text-white/40">Crop</span>
+          <span className="text-[8px] font-semibold tracking-wide text-white/40">{t('editor.crop')}</span>
         </button>
 
         {/* Text button */}
         <button
           onClick={hasSelected ? onEditText : onAddText}
-          title="Text"
+          title={hasSelected ? t('editor.edit') : t('editor.text')}
           className="w-12 h-12 rounded-[14px] bg-[#1c1c1e] border border-white/10 flex flex-col items-center justify-center gap-0.5 text-white/60 hover:bg-[#252528] hover:text-white/90 hover:border-white/20 active:scale-[0.95] transition-all"
         >
           {hasSelected ? <Edit2 size={17} className="text-[#3b82f6]" /> : <Type size={17} />}
           <span className={`text-[8px] font-semibold tracking-wide ${hasSelected ? 'text-[#3b82f6]' : 'text-white/40'}`}>
-            {hasSelected ? 'Edit' : 'Text'}
+            {hasSelected ? t('editor.edit') : t('editor.text')}
           </span>
         </button>
 
         {/* AI Generate button */}
         <button
           onClick={onGenerateAI}
-          title="AI Generate"
+          title={t('editor.ai')}
           className="relative w-12 h-12 rounded-[14px] bg-gradient-to-br from-violet-600/10 to-indigo-600/10 border border-violet-500/20 flex flex-col items-center justify-center gap-0.5 text-violet-400 hover:from-violet-600/20 hover:to-indigo-600/20 hover:text-violet-300 hover:border-violet-500/40 active:scale-[0.95] transition-all"
         >
           <Sparkles size={17} />
-          <span className="text-[8px] font-semibold tracking-wide">AI</span>
+          <span className="text-[8px] font-semibold tracking-wide">{t('editor.ai')}</span>
           <span className="absolute -top-1 -right-1 bg-violet-500 text-white text-[6px] font-bold px-1 rounded-sm">
            
           </span>
@@ -236,16 +238,13 @@ export function EditorCanvas({
 ────────────────────────────────────────────────────────── */
 
 export function applyWatermark(fc: any, width: number, height: number, callback?: () => void) {
-  const isVertical = height > width;
-  const src = isVertical ? watermarkVerticalSrc : watermarkHorizontalSrc;
-  
   const existing = fc.getObjects().find((o: any) => o.name === 'watermark');
   if (existing) {
     fc.remove(existing);
   }
 
   window.fabric.Image.fromURL(
-    src,
+    watermarkSrc,
     (wmImg: any) => {
       if (!wmImg || !wmImg.width) {
         console.error('Failed to load watermark image', wmImg);
@@ -253,10 +252,10 @@ export function applyWatermark(fc: any, width: number, height: number, callback?
         return;
       }
       wmImg.set({
-        left: 0,
-        top: 0,
-        originX: 'left',
-        originY: 'top',
+        left: width / 2,
+        top: height / 2,
+        originX: 'center',
+        originY: 'center',
         scaleX: width / wmImg.width,
         scaleY: height / wmImg.height,
         selectable: false,

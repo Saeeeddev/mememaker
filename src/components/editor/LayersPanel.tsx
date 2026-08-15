@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Eye, EyeOff, Lock, Unlock, Layers as LayersIcon, X, ChevronUp, ChevronDown } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 interface LayersPanelProps {
   isOpen: boolean
@@ -23,6 +24,7 @@ interface LayerItem {
 export function LayersPanel({ isOpen, onClose, fabricRef, isFullScreen }: LayersPanelProps) {
   const [layers, setLayers] = useState<LayerItem[]>([])
   const [selectedObj, setSelectedObj] = useState<any>(null)
+  const { t } = useTranslation()
 
   const refreshLayers = () => {
     const fc = fabricRef.current
@@ -36,7 +38,7 @@ export function LayersPanel({ isOpen, onClose, fabricRef, isFullScreen }: Layers
     if (bgImage) {
       newLayers.push({
         id: 'bg',
-        name: 'Background',
+        name: t('editor.background'),
         visible: true,
         locked: true,
         type: 'image',
@@ -52,12 +54,12 @@ export function LayersPanel({ isOpen, onClose, fabricRef, isFullScreen }: Layers
       if (obj.name === 'watermark' || obj.name === 'cropRect') continue // Hide watermark & crop area
       
       const isText = obj.type && obj.type.toLowerCase().includes('text')
-      let name = isText ? obj.text : (obj.type === 'path' ? 'Drawing' : 'Image')
+      let name = isText ? obj.text : (obj.type === 'path' ? t('editor.drawing') : t('editor.image'))
       if (name?.length > 15) name = name.substring(0, 15) + '...'
 
       newLayers.push({
         id: obj.id || `layer-${i}`,
-        name: name || (isText ? 'Text' : 'Layer'),
+        name: name || (isText ? t('editor.text') : t('editor.layer')),
         visible: obj.visible !== false,
         locked: !obj.selectable,
         type: obj.type,
@@ -172,7 +174,7 @@ export function LayersPanel({ isOpen, onClose, fabricRef, isFullScreen }: Layers
           <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 bg-black/20">
             <div className="flex items-center gap-2">
               <LayersIcon size={16} className="text-white" />
-              <span className="text-white font-bold text-[14px]">Layers</span>
+              <span className="text-white font-bold text-[14px]">{t('editor.layers')}</span>
             </div>
             <button
               onClick={onClose}
@@ -245,7 +247,7 @@ export function LayersPanel({ isOpen, onClose, fabricRef, isFullScreen }: Layers
                   </div>
                   
                   {layer.isBackground && (
-                    <span className="text-white/80 font-semibold text-[11px] text-center mt-1">Background</span>
+                    <span className="text-white/80 font-semibold text-[11px] text-center mt-1">{t('editor.background')}</span>
                   )}
                 </div>
               )

@@ -1,16 +1,18 @@
 import { NavLink, useLocation } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { Zap, Home, ShoppingBag, User, ImagePlus } from 'lucide-react'
 import { motion } from 'framer-motion'
 import LiquidGlass from 'liquid-glass-react'
 
 export function BottomNav() {
+  const { t } = useTranslation()
   const location = useLocation()
 
   const navItems = [
-    { path: '/shop', label: 'Shop', icon: ShoppingBag, disabled: false },
-    { path: '/', label: 'Home', icon: Home, disabled: false },
-    { path: '/tasks', label: 'Earn', icon: Zap, disabled: false },
-    { path: '/profile', label: 'Profile', icon: User, disabled: false },
+    { path: '/shop', label: t('layout.shop'), icon: ShoppingBag, disabled: false },
+    { path: '/', label: t('layout.home'), icon: Home, disabled: false },
+    { path: '/tasks', label: t('layout.earn'), icon: Zap, disabled: false },
+    { path: '/profile', label: t('layout.profile'), icon: User, disabled: false },
   ]
 
   return (
@@ -80,7 +82,7 @@ export function BottomNav() {
                       )}
                       {disabled && (
                         <span className="absolute left-1/2 top-[19px] z-20 min-w-[46px] -translate-x-1/2 rounded-md bg-[#229ED9] px-2 py-1 text-center text-[10px] font-extrabold uppercase leading-none text-white shadow-[0_4px_12px_rgba(34,158,217,0.35)]">
-                          Soon
+                          {t('layout.soon')}
                         </span>
                       )}
                       <Icon

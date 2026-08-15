@@ -2,6 +2,7 @@ import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Trash2 } from 'lucide-react'
 import { FONTS, type TextEditState } from './types'
+import { useTranslation } from 'react-i18next'
 
 interface TextEditPanelProps {
   open: boolean
@@ -12,6 +13,7 @@ interface TextEditPanelProps {
 }
 
 export function TextEditPanel({ open, textEdit, onApply, onDelete, onClose }: TextEditPanelProps) {
+  const { t } = useTranslation()
   return createPortal(
     <AnimatePresence>
       {open && (
@@ -38,7 +40,7 @@ export function TextEditPanel({ open, textEdit, onApply, onDelete, onClose }: Te
 
             {/* Title + close */}
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-white font-bold text-[16px]">Edit Text ✍️</h3>
+              <h3 className="text-white font-bold text-[16px]">{t('editor.edit_text')}</h3>
               <div className="flex items-center gap-2">
                 {onDelete && (
                   <button
@@ -52,7 +54,7 @@ export function TextEditPanel({ open, textEdit, onApply, onDelete, onClose }: Te
                   onClick={onClose}
                   className="px-4 py-1.5 rounded-[12px] bg-[#229ED9] text-white font-bold text-[14px] shadow-[0_4px_16px_rgba(34,158,217,0.3)] hover:bg-[#1a85b9] active:scale-[0.97] transition-all"
                 >
-                  Done
+                  {t('editor.done')}
                 </button>
               </div>
             </div>
@@ -62,13 +64,13 @@ export function TextEditPanel({ open, textEdit, onApply, onDelete, onClose }: Te
               value={textEdit.text}
               onChange={e => onApply({ text: e.target.value })}
               rows={2}
-              placeholder="Type your text..."
+              placeholder={t('editor.type_your_text')}
               className="w-full bg-[#1c1c1e] border border-white/10 rounded-[14px] px-3.5 py-3 text-white text-[15px] font-semibold placeholder-white/25 outline-none resize-none mb-4 focus:border-[#229ED9]/50 transition-colors"
             />
 
             {/* Font family */}
             <div className="flex items-center justify-between mb-3">
-              <span className="text-white/60 text-[13px] font-semibold">Font</span>
+              <span className="text-white/60 text-[13px] font-semibold">{t('editor.font')}</span>
               <select
                 value={textEdit.fontFamily}
                 onChange={e => onApply({ fontFamily: e.target.value })}
@@ -83,7 +85,7 @@ export function TextEditPanel({ open, textEdit, onApply, onDelete, onClose }: Te
             {/* Font size */}
             <div className="flex items-center justify-between mb-4">
               <span className="text-white/60 text-[13px] font-semibold">
-                Size <span className="text-white ml-1">{textEdit.fontSize}px</span>
+                {t('editor.size')} <span className="text-white ml-1">{textEdit.fontSize}px</span>
               </span>
               <input
                 type="range"
@@ -109,7 +111,7 @@ export function TextEditPanel({ open, textEdit, onApply, onDelete, onClose }: Te
                     className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
                   />
                 </div>
-                <span className="text-white/70 text-[12.5px] font-semibold">Text Color</span>
+                <span className="text-white/70 text-[12.5px] font-semibold">{t('editor.text_color')}</span>
               </label>
 
               <div className="w-px h-6 bg-white/10" />
@@ -126,7 +128,7 @@ export function TextEditPanel({ open, textEdit, onApply, onDelete, onClose }: Te
                     className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
                   />
                 </div>
-                <span className="text-white/70 text-[12.5px] font-semibold">Stroke</span>
+                <span className="text-white/70 text-[12.5px] font-semibold">{t('editor.stroke')}</span>
               </label>
             </div>
           </motion.div>

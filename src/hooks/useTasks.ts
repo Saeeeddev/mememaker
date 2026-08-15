@@ -2,9 +2,9 @@ import { useState, useEffect } from 'react'
 import type { Task } from '@/types/task'
 
 const MOCK_TASKS: Task[] = [
-  { id: '1', title: 'Subscribe to @RabbitsGift', description: 'Subscribe to our main channel', reward: 10, rewardType: 'stars', type: 'social', completed: false, link: 'https://t.me/RabbitsGift' },
-  { id: '2', title: 'Join @RabbitsChat', description: 'Join our community chat', reward: 5, rewardType: 'stars', type: 'social', completed: false, link: 'https://t.me/RabbitsChat' },
-  { id: '3', title: 'Qcold Crypto', description: 'Follow our crypto partner', reward: 10, rewardType: 'stars', type: 'social', completed: false, link: 'https://t.me/qcoldcrypto' },
+  { id: '1', title: 'Subscribe to @RabbitsGift', title_ru: 'Подписаться на @RabbitsGift', description: 'Subscribe to our main channel', description_ru: 'Подпишитесь на наш главный канал', reward: 10, rewardType: 'stars', type: 'social', completed: false, link: 'https://t.me/RabbitsGift' },
+  { id: '2', title: 'Join @RabbitsChat', title_ru: 'Вступить в @RabbitsChat', description: 'Join our community chat', description_ru: 'Присоединяйтесь к нашему чату', reward: 5, rewardType: 'stars', type: 'social', completed: false, link: 'https://t.me/RabbitsChat' },
+  { id: '3', title: 'Qcold Crypto', title_ru: 'Qcold Crypto', description: 'Follow our crypto partner', description_ru: 'Подпишитесь на нашего криптопартнера', reward: 10, rewardType: 'stars', type: 'social', completed: false, link: 'https://t.me/qcoldcrypto' },
 ]
 
 export function useTasks() {

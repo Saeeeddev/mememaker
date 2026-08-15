@@ -1,5 +1,6 @@
 import type { Task } from '@/types/task'
 import starsIcon from '@assets/icons/Stars.webp'
+import { useTranslation } from 'react-i18next'
 
 interface TaskCardProps {
   task: Task
@@ -7,6 +8,7 @@ interface TaskCardProps {
 }
 
 export function TaskCard({ task, onAction }: TaskCardProps) {
+  const { t, i18n } = useTranslation()
   const taskIcon = task.id === '1' ? '🪄' : task.id === '2' ? '🐰' : '🏙️'
 
   return (
@@ -28,8 +30,12 @@ export function TaskCard({ task, onAction }: TaskCardProps) {
 
       {/* Content Area */}
       <div className="flex-1 min-w-0">
-        <h3 className="font-extrabold text-white text-[15px] leading-[17px] line-clamp-2">{task.title}</h3>
-        <p className="text-[#7f8790] text-[12.5px] leading-[15px] truncate mt-0.5">{task.description}</p>
+        <h3 className="font-extrabold text-white text-[15px] leading-[17px] line-clamp-2">
+          {i18n.language === 'ru' ? (task.title_ru || task.title) : task.title}
+        </h3>
+        <p className="text-[#7f8790] text-[12.5px] leading-[15px] truncate mt-0.5">
+          {i18n.language === 'ru' ? (task.description_ru || task.description) : task.description}
+        </p>
         <div className="mt-0.5 flex items-center gap-1 text-xs">
           <span className="text-[#00f0b5] font-extrabold">+{task.reward} {task.rewardType.toUpperCase()}</span>
           {task.rewardType === 'stars' && (
@@ -48,7 +54,7 @@ export function TaskCard({ task, onAction }: TaskCardProps) {
             : 'bg-[#172d42] text-[#2AABEE] border border-[#229ED9]/75 hover:bg-[#1c3852]'
         }`}
       >
-        {task.completed ? 'Done' : 'Go'}
+        {task.completed ? t('tasks.done') : t('tasks.go')}
       </button>
     </div>
   )

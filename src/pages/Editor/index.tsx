@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Search, Upload, Check, RotateCw, Crop, Pencil, X, Type, Sparkles, Undo2, Edit2, ChevronLeft, ChevronRight, Loader2, Trash2, Minus, Plus } from 'lucide-react'
 import {
@@ -77,6 +78,7 @@ async function getResizedImageURL(file: File, maxDim = 1920): Promise<string> {
 // Editor Page
 // ─────────────────────────────────────
 export function Editor() {
+  const { t } = useTranslation()
   // "pick" shows template picker overlay, "edit" shows full-screen editor
   const [step, setStep] = useState<'pick' | 'edit'>('edit')
   const [selectedSrc, setSelectedSrc] = useState<string | null>(null)
@@ -422,7 +424,7 @@ export function Editor() {
       fc.isDrawingMode = false
     }
     const fabric = window.fabric
-    const text = new fabric.Text('Your Text', {
+    const text = new fabric.Text(t('editor.your_text'), {
       left: fc.width / 2,
       top: fc.height / 2,
       fontFamily: 'Impact',
@@ -439,7 +441,7 @@ export function Editor() {
     fc.add(text)
     fc.setActiveObject(text)
     setHasSelected(true)
-    setTextEdit({ text: 'Your Text', fontFamily: 'Impact', fontSize: 40, textColor: '#ffffff', strokeColor: '#000000' })
+    setTextEdit({ text: t('editor.your_text'), fontFamily: 'Impact', fontSize: 40, textColor: '#ffffff', strokeColor: '#000000' })
     setShowEditPanel(true)
   }
 
@@ -706,7 +708,7 @@ export function Editor() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const tg = (window as any).Telegram?.WebApp
     const chatId = tg?.initDataUnsafe?.user?.id
-    if (!chatId) { alert('Please open inside Telegram'); return }
+    if (!chatId) { alert(t('editor.open_in_telegram')); return }
     const dataURL = fc.toDataURL({ format: 'png', quality: 1, multiplier: 3 })
     fetch(dataURL)
       .then(r => r.blob())
@@ -793,14 +795,14 @@ export function Editor() {
                 </svg>
               </div>
               <div className="text-center">
-                <p className="text-white/50 font-semibold text-[15px] mb-1">No template selected</p>
-                <p className="text-white/25 text-[12px]">Choose a meme template to start editing</p>
+                <p className="text-white/50 font-semibold text-[15px] mb-1">{t('editor.no_template')}</p>
+                <p className="text-white/25 text-[12px]">{t('editor.choose_to_start')}</p>
               </div>
               <button
                 onClick={openPicker}
                 className="px-6 py-2.5 rounded-[12px] bg-[#229ED9] text-white font-bold text-[13px] shadow-[0_4px_16px_rgba(34,158,217,0.35)] active:scale-[0.97] transition-transform"
               >
-                Choose Template
+                {t('editor.choose_template')}
               </button>
             </div>
             {/* Spacer matching the side toolbar width */}
@@ -878,7 +880,7 @@ export function Editor() {
                     className="flex items-center gap-2 px-3 py-2 rounded-full bg-black/60 backdrop-blur-xl border border-white/20 text-white shadow-lg active:scale-95 transition-all"
                   >
                     <X size={16} />
-                    <span className="text-[12px] font-bold">Close Full Screen</span>
+                    <span className="text-[12px] font-bold">{t('editor.close_full_screen')}</span>
                   </button>
                 </motion.div>
               )}
@@ -911,13 +913,13 @@ export function Editor() {
                   <div className="w-[180px] bg-[#1c1c1e]/95 backdrop-blur-xl border-y border-l border-white/10 rounded-l-2xl h-auto py-2 shadow-[-8px_0_32px_rgba(0,0,0,0.5)]">
                     <div className="w-[180px] flex flex-col gap-1 px-2">
                       <button onClick={() => { setIsFullScreenPanelOpen(false); openPicker(); }} className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl hover:bg-white/10 text-white/80 transition-colors text-[13px] font-semibold">
-                        <Search size={16} /> Change Template
+                        <Search size={16} /> {t('editor.change_template')}
                       </button>
                       <button onClick={() => { setIsFullScreenPanelOpen(false); addImageInputRef.current?.click(); }} className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl hover:bg-white/10 text-white/80 transition-colors text-[13px] font-semibold">
-                        <Upload size={16} /> Add Image
+                        <Upload size={16} /> {t('editor.add_image')}
                       </button>
                       <button onClick={() => { setIsFullScreenPanelOpen(false); undo(); }} disabled={!canUndo} className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-xl transition-colors text-[13px] font-semibold ${canUndo ? 'hover:bg-white/10 text-white/80' : 'text-white/30 cursor-not-allowed'}`}>
-                        <Undo2 size={16} /> Undo
+                        <Undo2 size={16} /> {t('editor.undo')}
                       </button>
                       <button 
                         onClick={() => { 
@@ -932,25 +934,25 @@ export function Editor() {
                         className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl hover:bg-white/10 text-white/80 transition-colors text-[13px] font-semibold"
                       >
                         {hasSelected ? <Edit2 size={16} className="text-[#3b82f6]" /> : <Type size={16} />}
-                        Text Editor
+                        {t('editor.text_editor')}
                       </button>
                       <button onClick={handleRotate} className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl hover:bg-white/10 text-white/80 transition-colors text-[13px] font-semibold">
-                        <RotateCw size={16} /> Rotate
+                        <RotateCw size={16} /> {t('editor.rotate')}
                       </button>
                       <button onClick={() => { setIsFullScreenPanelOpen(false); toggleCrop(); }} className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl hover:bg-white/10 text-white/80 transition-colors text-[13px] font-semibold">
-                        <Crop size={16} /> Crop
+                        <Crop size={16} /> {t('editor.crop')}
                       </button>
                       <button onClick={() => { setIsFullScreenPanelOpen(false); toggleDraw(); }} className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-xl transition-colors text-[13px] font-semibold ${isDrawingMode ? 'bg-[#229ED9]/20 text-[#229ED9]' : 'hover:bg-white/10 text-white/80'}`}>
-                        <Pencil size={16} /> Draw
+                        <Pencil size={16} /> {t('editor.draw')}
                       </button>
                       <button onClick={() => { setIsFullScreenPanelOpen(false); setShowAIPanel(true); }} className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl hover:bg-violet-500/10 text-violet-400 transition-colors text-[13px] font-semibold">
-                        <Sparkles size={16} /> AI Generate
+                        <Sparkles size={16} /> {t('editor.ai_generate')}
                       </button>
                       
                       <div className="h-px bg-white/10 my-1 mx-2" />
                       
                       <button onClick={() => { setIsFullScreen(false); setIsFullScreenPanelOpen(false); }} className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl hover:bg-red-500/10 text-red-400 transition-colors text-[13px] font-semibold mt-1">
-                        <X size={16} /> Close Full Screen
+                        <X size={16} /> {t('editor.close_full_screen')}
                       </button>
                     </div>
                   </div>
@@ -973,13 +975,13 @@ export function Editor() {
                   onClick={cancelCrop}
                   className="flex-1 py-3 rounded-[14px] bg-[#1c1c1e] text-white font-bold text-[14px] border border-white/10 hover:bg-[#252528] active:scale-[0.98] transition-all"
                 >
-                  Cancel
+                  {t('editor.cancel')}
                 </button>
                 <button
                   onClick={confirmCrop}
                   className="flex-1 py-3 rounded-[14px] bg-[#229ED9] text-white font-bold text-[14px] shadow-[0_4px_24px_rgba(34,158,217,0.4)] hover:bg-[#2ab6f6] active:scale-[0.98] transition-all"
                 >
-                  Confirm Crop
+                  {t('editor.confirm_crop')}
                 </button>
               </motion.div>
             ) : isDrawingMode ? (
@@ -994,13 +996,13 @@ export function Editor() {
                   onClick={toggleDraw}
                   className="flex-1 py-3 rounded-[14px] bg-[#1c1c1e] text-white font-bold text-[14px] border border-white/10 hover:bg-[#252528] active:scale-[0.98] transition-all"
                 >
-                  Cancel
+                  {t('editor.cancel')}
                 </button>
                 <button
                   onClick={() => setShowDrawSettings(true)}
                   className="flex-1 py-3 rounded-[14px] bg-[#229ED9] text-white font-bold text-[14px] shadow-[0_4px_24px_rgba(34,158,217,0.4)] hover:bg-[#2ab6f6] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
                 >
-                  <Pencil size={16} /> Brush Settings
+                  <Pencil size={16} /> {t('editor.brush_settings')}
                 </button>
               </motion.div>
             ) : (
@@ -1033,7 +1035,7 @@ export function Editor() {
               <div className="flex items-center justify-between mb-3 pb-2 border-b border-white/10">
                 <div className="flex items-center gap-2">
                   <Pencil size={15} className="text-[#229ED9]" />
-                  <span className="text-white font-bold text-[13px]">Brush Settings</span>
+                  <span className="text-white font-bold text-[13px]">{t('editor.brush_settings')}</span>
                 </div>
                 <button
                   onClick={() => setShowDrawSettings(false)}
@@ -1045,7 +1047,7 @@ export function Editor() {
 
               {/* Color swatches */}
               <div className="mb-3.5">
-                <span className="text-white/50 text-[11px] font-semibold mb-2 block">Brush Color</span>
+                <span className="text-white/50 text-[11px] font-semibold mb-2 block">{t('editor.brush_color')}</span>
                 <div className="grid grid-cols-5 gap-1.5 mb-2">
                   {DRAW_COLORS.map(c => (
                     <button
@@ -1062,7 +1064,7 @@ export function Editor() {
                 </div>
                 {/* Custom color input */}
                 <div className="flex items-center justify-between bg-white/5 rounded-[10px] px-2.5 py-1.5 border border-white/8">
-                  <span className="text-white/60 text-[11px] font-semibold">Custom Color</span>
+                  <span className="text-white/60 text-[11px] font-semibold">{t('editor.custom_color')}</span>
                   <div
                     className="w-6 h-6 rounded-full border-2 border-white/20 relative overflow-hidden"
                     style={{ backgroundColor: drawSettings.color }}
@@ -1080,9 +1082,9 @@ export function Editor() {
               {/* Brush width / size */}
               <div className="mb-3.5">
                 <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-white/50 text-[11px] font-semibold">Brush Size</span>
+                  <span className="text-white/50 text-[11px] font-semibold">{t('editor.brush_size')}</span>
                   <div className="flex items-center gap-1.5">
-                    <span className="text-white text-[11px] font-bold">{drawSettings.width}px</span>
+                    <span className="text-white text-[11px] font-bold">{drawSettings.width}{t('editor.px')}</span>
                     <div
                       className="rounded-full bg-white transition-all border border-black/30"
                       style={{
@@ -1121,7 +1123,7 @@ export function Editor() {
               {/* Opacity */}
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-white/50 text-[11px] font-semibold">Opacity</span>
+                  <span className="text-white/50 text-[11px] font-semibold">{t('editor.opacity')}</span>
                   <span className="text-white text-[11px] font-bold">{Math.round(drawSettings.opacity * 100)}%</span>
                 </div>
                 <input
@@ -1141,13 +1143,13 @@ export function Editor() {
                   disabled={!canUndo}
                   className={`flex items-center gap-1.5 text-[12px] font-bold transition-colors ${canUndo ? 'text-white hover:text-white' : 'text-white/30 cursor-not-allowed'}`}
                 >
-                  <Undo2 size={14} /> Undo Stroke
+                  <Undo2 size={14} /> {t('editor.undo_stroke')}
                 </button>
                 <button
                   onClick={() => handleClearDrawings()}
                   className="flex items-center gap-1.5 text-red-400 hover:text-red-300 transition-colors text-[12px] font-bold"
                 >
-                  <Trash2 size={14} /> Clear All
+                  <Trash2 size={14} /> {t('editor.clear_all')}
                 </button>
               </div>
             </motion.div>
@@ -1207,14 +1209,14 @@ export function Editor() {
               {/* Header & Cancel */}
               <div className="flex items-center justify-between px-5 mb-5">
                 <div>
-                  <h1 className="text-white font-bold text-[20px] mb-0.5">Meme Zone</h1>
-                  <p className="text-white/40 text-[12px]">Pick a template or upload your own</p>
+                  <h1 className="text-white font-bold text-[20px] mb-0.5">{t('editor.meme_zone')}</h1>
+                  <p className="text-white/40 text-[12px]">{t('editor.pick_template')}</p>
                 </div>
                 <button
                   onClick={() => setStep('edit')}
                   className="px-3.5 py-1.5 rounded-[10px] bg-red-500/15 text-red-400 font-semibold text-[13px] border border-red-500/20 active:scale-[0.97] transition-all"
                 >
-                  Cancel
+                  {t('editor.cancel')}
                 </button>
               </div>
 
@@ -1226,7 +1228,7 @@ export function Editor() {
                   className="w-full flex items-center justify-center gap-2 py-3 rounded-[14px] bg-white/5 border border-dashed border-white/15 text-white/70 hover:border-[#229ED9]/60 hover:text-[#229ED9] transition-all text-[14px] font-semibold"
                 >
                   <Upload size={18} />
-                  Upload from Gallery
+                  {t('editor.upload_gallery')}
                 </button>
               </div>
 
@@ -1237,7 +1239,7 @@ export function Editor() {
                   <input
                     value={searchQ}
                     onChange={e => { setSearchQ(e.target.value); setPickerTab('all'); }}
-                    placeholder="Search meme templates..."
+                    placeholder={t('editor.search_templates')}
                     className="flex-1 bg-transparent text-white text-[14px] placeholder-white/30 outline-none"
                   />
                 </div>
@@ -1249,14 +1251,14 @@ export function Editor() {
                   onClick={() => setPickerTab('all')}
                   className={`pb-2.5 text-[14px] font-semibold transition-colors relative ${pickerTab === 'all' ? 'text-white' : 'text-white/40 hover:text-white/70'}`}
                 >
-                  All
+                  {t('editor.all')}
                   {pickerTab === 'all' && <motion.div layoutId="pickerTabLine" className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#229ED9]" />}
                 </button>
                 <button 
                   onClick={() => setPickerTab('trending')}
                   className={`pb-2.5 text-[14px] font-semibold transition-colors relative ${pickerTab === 'trending' ? 'text-white' : 'text-white/40 hover:text-white/70'}`}
                 >
-                  Trending
+                  {t('editor.trending')}
                   {pickerTab === 'trending' && <motion.div layoutId="pickerTabLine" className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#229ED9]" />}
                 </button>
               </div>
@@ -1282,7 +1284,7 @@ export function Editor() {
                               : 'border-transparent'
                           }`}
                         >
-                          <span className="text-black/30 font-bold text-xs">BLANK</span>
+                          <span className="text-black/30 font-bold text-xs">{t('editor.blank')}</span>
                           {pickerSelectedSrc === BLANK_IMAGE && (
                             <div className="absolute inset-0 bg-[#229ED9]/20 flex items-center justify-center">
                               <div className="w-7 h-7 rounded-full bg-[#229ED9] flex items-center justify-center">
@@ -1320,7 +1322,7 @@ export function Editor() {
                         onClick={() => setPage(p => p + 1)}
                         className="w-full mt-4 py-3 rounded-[13px] bg-[#1c1c1e] border border-white/10 text-white/60 text-[13px] font-semibold hover:bg-white/8 transition-colors"
                       >
-                        Load more
+                        {t('editor.load_more')}
                       </button>
                     )}
 
@@ -1328,7 +1330,7 @@ export function Editor() {
                       <div className="w-full mt-8 pb-4 flex flex-col items-center justify-center text-center">
                         <Search size={22} className="text-white/20 mb-2" />
                         <p className="text-white/40 text-[12px] leading-relaxed max-w-[200px]">
-                          Can't find it?<br/>Use the search bar above to explore 2000+ templates!
+                          {t('editor.cant_find')}<br/>{t('editor.use_search_bar')}
                         </p>
                       </div>
                     )}
@@ -1352,10 +1354,10 @@ export function Editor() {
                       {isTemplateApplying ? (
                         <>
                           <Loader2 className="w-5 h-5 animate-spin" />
-                          Preparing...
+                          {t('editor.preparing')}
                         </>
                       ) : (
-                        'Use This Template →'
+                        t('editor.use_this_template')
                       )}
                     </button>
                   </motion.div>

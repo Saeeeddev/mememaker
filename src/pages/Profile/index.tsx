@@ -1,19 +1,25 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useAppStore } from '@store/useAppStore'
 import { ProfileHeader } from '@components/profile/ProfileHeader'
 import { MyMemes } from '@components/profile/MyMemes'
 import { InviteFriends } from '@components/profile/InviteFriends'
+import { PromoCode } from '@components/profile/PromoCode'
 import GradientWaves from '@components/profile/GradientWaves'
 import LiquidGlass from 'liquid-glass-react'
 import starsIcon from '@assets/icons/Stars.webp'
 
 const Profile = () => {
   const { openTopup } = useAppStore()
+  const { t } = useTranslation()
   const [isInviteExpanded, setIsInviteExpanded] = useState(false)
+  const [isPromoExpanded, setIsPromoExpanded] = useState(false)
+
+  const isExpanded = isInviteExpanded || isPromoExpanded
 
   return (
     <div className={`flex flex-col min-h-dvh bg-black relative -mx-4 -mt-4 ${
-      isInviteExpanded 
+      isExpanded 
         ? "overflow-y-auto pb-[calc(7rem+env(safe-area-inset-bottom))]" 
         : "overflow-hidden -mb-[calc(7rem+env(safe-area-inset-bottom))]"
     }`}>
@@ -45,7 +51,7 @@ const Profile = () => {
         </div>
         <div className="absolute inset-0 bg-black/10" />
         <div className="relative z-10">
-          <div className="text-[#a9c2c8] text-sm mb-1.5">Meme Zone Balance</div>
+          <div className="text-[#a9c2c8] text-sm mb-1.5">{t('profile.balance')}</div>
           <div className="flex items-center justify-center gap-2 text-[42px] font-bold leading-none text-white">
             0
             <img src={starsIcon} alt="Stars" className="w-8 h-8 mb-0.5" />
@@ -74,7 +80,7 @@ const Profile = () => {
                   <img src={starsIcon} alt="Stars" className="w-5 h-5 drop-shadow-md" />
                 </div>
               </div>
-              <span className="text-[12.5px] text-[#dfe6e8]">Top up Stars</span>
+              <span className="text-[12.5px] text-[#dfe6e8]">{t('profile.top_up')}</span>
             </button>
           </div>
         </div>
@@ -90,6 +96,9 @@ const Profile = () => {
 
         {/* Invite Friends */}
         <InviteFriends onExpand={setIsInviteExpanded} />
+
+        {/* Promo Code */}
+        <PromoCode onExpand={setIsPromoExpanded} />
       </div>
     </div>
   )

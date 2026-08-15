@@ -1,6 +1,7 @@
 import { ImagePlus, Layers, History } from 'lucide-react'
 import { useAppStore } from '@store/useAppStore'
 import starsIcon from '@assets/icons/Stars.webp'
+import { useTranslation } from 'react-i18next'
 
 interface EditorTopBarProps {
   onAddImage: () => void
@@ -9,6 +10,7 @@ interface EditorTopBarProps {
 
 export function EditorTopBar({ onAddImage, onChangeTemplate }: EditorTopBarProps) {
   const { openTopup } = useAppStore()
+  const { t } = useTranslation()
 
   return (
     <div className="flex items-center gap-2 px-4 pt-4 pb-3 shrink-0">
@@ -28,7 +30,7 @@ export function EditorTopBar({ onAddImage, onChangeTemplate }: EditorTopBarProps
           className="flex-1 flex items-center justify-center gap-1.5 h-full text-white/70 hover:text-white hover:bg-white/5 transition-all text-[13px] font-semibold"
         >
           <ImagePlus size={15} className="text-[#229ED9]" />
-          Add Image
+          {t('editor.add_image')}
         </button>
 
         <div className="w-px h-6 bg-white/10 shrink-0" />
@@ -38,7 +40,7 @@ export function EditorTopBar({ onAddImage, onChangeTemplate }: EditorTopBarProps
           className="flex-1 flex items-center justify-center gap-1.5 h-full text-white/70 hover:text-white hover:bg-white/5 transition-all text-[13px] font-semibold"
         >
           <Layers size={15} className="text-purple-400" />
-          Template
+          {t('editor.template')}
         </button>
 
         <div className="w-px h-6 bg-white/10 shrink-0" />
@@ -48,7 +50,7 @@ export function EditorTopBar({ onAddImage, onChangeTemplate }: EditorTopBarProps
           className="flex-1 flex items-center justify-center gap-1.5 h-full text-white/70 hover:text-white hover:bg-white/5 transition-all text-[13px] font-semibold"
         >
           <History size={15} className="text-green-400" />
-          Recent
+          {t('editor.recent')}
         </button>
       </div>
     </div>

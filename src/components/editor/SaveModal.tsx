@@ -1,5 +1,6 @@
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Play, Crown, Download } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 interface SaveModalProps {
   open: boolean
@@ -8,6 +9,7 @@ interface SaveModalProps {
 }
 
 export function SaveModal({ open, onClose, onSaveOption }: SaveModalProps) {
+  const { t } = useTranslation()
   return (
     <AnimatePresence>
       {open && (
@@ -21,8 +23,8 @@ export function SaveModal({ open, onClose, onSaveOption }: SaveModalProps) {
           >
             <div className="flex items-center justify-between mb-5">
               <div>
-                <h3 className="text-white font-bold text-[18px]">Save Meme</h3>
-                <p className="text-white/40 text-[13px]">Choose how you want to save</p>
+                <h3 className="text-white font-bold text-[18px]">{t('editor.save_meme')}</h3>
+                <p className="text-white/40 text-[13px]">{t('editor.choose_how_to_save')}</p>
               </div>
               <button onClick={onClose} className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-white/60 hover:text-white hover:bg-white/10 transition-colors">
                 <X size={18} />
@@ -40,10 +42,10 @@ export function SaveModal({ open, onClose, onSaveOption }: SaveModalProps) {
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-0.5">
-                    <span className="text-white font-bold text-[15px]">Free Download</span>
-                    <span className="px-2 py-0.5 rounded-md bg-white/10 text-white/60 text-[10px] font-bold uppercase tracking-wider">Limited</span>
+                    <span className="text-white font-bold text-[15px]">{t('editor.free_download')}</span>
+                    <span className="px-2 py-0.5 rounded-md bg-white/10 text-white/60 text-[10px] font-bold uppercase tracking-wider">{t('editor.limited')}</span>
                   </div>
-                  <p className="text-white/40 text-[12px]">With watermark</p>
+                  <p className="text-white/40 text-[12px]">{t('editor.with_watermark')}</p>
                 </div>
               </button>
 
@@ -57,10 +59,10 @@ export function SaveModal({ open, onClose, onSaveOption }: SaveModalProps) {
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-0.5">
-                    <span className="text-white font-bold text-[15px]">Watch Ad</span>
-                    <span className="px-2 py-0.5 rounded-md bg-[#229ED9]/20 text-[#229ED9] text-[10px] font-bold uppercase tracking-wider">Unlimited</span>
+                    <span className="text-white font-bold text-[15px]">{t('editor.watch_ad')}</span>
+                    <span className="px-2 py-0.5 rounded-md bg-[#229ED9]/20 text-[#229ED9] text-[10px] font-bold uppercase tracking-wider">{t('editor.unlimited')}</span>
                   </div>
-                  <p className="text-white/40 text-[12px]">With watermark • Support us</p>
+                  <p className="text-white/40 text-[12px]">{t('editor.with_watermark_support_us')}</p>
                 </div>
               </button>
 
@@ -75,10 +77,10 @@ export function SaveModal({ open, onClose, onSaveOption }: SaveModalProps) {
                 </div>
                 <div className="flex-1 relative z-10">
                   <div className="flex items-center gap-2 mb-0.5">
-                    <span className="text-white font-bold text-[15px]">Pro Version</span>
-                    <span className="px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-400 text-[10px] font-bold uppercase tracking-wider">Premium</span>
+                    <span className="text-white font-bold text-[15px]">{t('editor.pro_version')}</span>
+                    <span className="px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-400 text-[10px] font-bold uppercase tracking-wider">{t('editor.premium')}</span>
                   </div>
-                  <p className="text-amber-500/60 text-[12px]">No watermark • High quality</p>
+                  <p className="text-amber-500/60 text-[12px]">{t('editor.no_watermark_high_quality')}</p>
                 </div>
               </button>
             </div>
