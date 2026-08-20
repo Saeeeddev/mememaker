@@ -67,7 +67,7 @@ export function Spinner() {
         {/* Dim overlay */}
         <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px]" />
       </div>
-        {/* Free Spins Badge */}
+      {/* Free Spins Badge */}
       <div className="absolute top-4 right-4 z-20 flex items-center gap-2 bg-[#1c1c1e]/80 backdrop-blur-md border border-white/10 rounded-[12px] px-3 py-1.5 shadow-[0_4px_12px_rgba(0,0,0,0.4)]">
         <Gift size={14} className="text-[#229ED9]" />
         <div className="flex flex-col">

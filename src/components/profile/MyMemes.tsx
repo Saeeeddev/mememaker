@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 export const MyMemes = () => {
   const { t } = useTranslation()
   return (
-    <div className="bg-[#141416] rounded-[18px] p-4">
+    <div className="mt-4 bg-[#141416] rounded-[18px] p-4">
       {/* Header */}
       <div className="flex items-center justify-between mb-3.5">
         <span className="text-[15.5px] font-bold text-white">{t('profile.history_title')}</span>

@@ -3,10 +3,12 @@ import { useTranslation } from 'react-i18next'
 import { Zap, Home, ShoppingBag, User, ImagePlus } from 'lucide-react'
 import { motion } from 'framer-motion'
 import LiquidGlass from 'liquid-glass-react'
+import { useAppStore } from '@store/useAppStore'
 
 export function BottomNav() {
   const { t } = useTranslation()
   const location = useLocation()
+  const isPro = Boolean(useAppStore((s) => s.proPlan))
 
   const navItems = [
     { path: '/shop', label: t('layout.shop'), icon: ShoppingBag, disabled: false },
@@ -70,6 +72,7 @@ export function BottomNav() {
                   const isActive = location.pathname === item.path
                   const Icon = item.icon
                   const disabled = item.disabled
+                  const isProfilePro = item.path === '/profile' && isPro
 
                   const content = (
                     <>
@@ -85,8 +88,13 @@ export function BottomNav() {
                           {t('layout.soon')}
                         </span>
                       )}
+                      {isProfilePro && !disabled && (
+                        <span className="absolute top-[8px] right-[10px] z-20 px-1.5 py-[2px] rounded-full bg-gradient-to-r from-[#f5a623] to-[#f8cd46] text-[#1a1a1a] text-[8.5px] font-black uppercase leading-none shadow-[0_2px_8px_rgba(245,166,35,0.5)] border border-[#fff]/20">
+                          PRO
+                        </span>
+                      )}
                       <Icon
-                        className={`relative z-10 mb-[7px] h-[25px] w-[25px] ${!disabled && isActive ? 'drop-shadow-[0_0_7px_rgba(34,158,217,0.62)]' : ''}`}
+                        className={`relative z-10 mb-[7px] h-[25px] w-[25px] ${!disabled && isActive ? 'drop-shadow-[0_0_7px_rgba(34,158,217,0.62)]' : ''} ${isProfilePro && !isActive ? 'text-[#f5a623]' : ''}`}
                         strokeWidth={!disabled && isActive ? 2.5 : 2}
                       />
                       <span className="relative z-10 text-[11px] font-medium leading-none tracking-normal">

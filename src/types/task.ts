@@ -4,8 +4,8 @@ export interface Task {
   title_ru?: string
   description: string
   description_ru?: string
-  reward: number          // Stars reward
-  rewardType: 'stars' | 'ton'
+  reward: number          // Reward amount
+  rewardType: 'stars' | 'ton' | 'energy'
   type: 'social' | 'invite' | 'daily' | 'special'
   link?: string
   completed: boolean

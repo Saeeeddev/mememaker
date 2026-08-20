@@ -8,6 +8,8 @@ import { TasksSkeleton } from '@components/skeletons/TasksSkeleton'
 import { Spinner } from '@components/tasks/Spinner'
 import { WatchAds } from '@components/tasks/WatchAds'
 
+import { BalanceBadges } from '@components/ui/BalanceBadges'
+
 import tasksBtnImg from '@assets/images/TasksButtonMain.webp'
 import watchAdsBtnImg from '@assets/images/WatchAddsMain.webp'
 import dailySpinBtnImg from '@assets/images/DailySpinMain.webp'
@@ -52,11 +54,14 @@ export function Tasks() {
       {/* Page Header */}
       <div className="mb-4 flex items-center justify-between px-2 shrink-0">
         <h1 className="text-[28px] font-black text-white italic">{t('tasks.earn')}</h1>
-        {activeTab === 'tasks' && (
-          <div className="rounded-full bg-gradient-to-r from-[#f5a623] to-[#f8cd46] px-4 py-1 text-[13px] font-black text-[#1a1a1a] shadow-[0_2px_8px_rgba(245,166,35,0.4)]">
-            {completedCount}/{tasks.length}
-          </div>
-        )}
+        <div className="flex items-center gap-2">
+          {activeTab === 'tasks' && (
+            <div className="rounded-full bg-gradient-to-r from-[#f5a623] to-[#f8cd46] px-3.5 py-1 text-[13px] font-black text-[#1a1a1a] shadow-[0_2px_8px_rgba(245,166,35,0.4)]">
+              {completedCount}/{tasks.length}
+            </div>
+          )}
+          <BalanceBadges size="sm" />
+        </div>
       </div>
 
       {/* Custom Tabs (Hidden on main menu) */}
@@ -66,7 +71,7 @@ export function Tasks() {
             <button
               key={tab}
               onClick={() => setActiveTab(tab as Tab)}
-              className={`relative px-4 py-2.5 text-[14px] font-bold rounded-[14px] whitespace-nowrap transition-colors flex-1 z-10 ${
+              className={`relative px-3 py-2.5 text-[13.5px] font-bold rounded-[14px] whitespace-nowrap transition-colors flex-1 z-10 ${
                 activeTab === tab ? 'text-white' : 'text-white/50 hover:text-white/80'
               }`}
             >
@@ -77,7 +82,18 @@ export function Tasks() {
                   transition={{ type: 'spring', stiffness: 300, damping: 30 }}
                 />
               )}
-              {tab === 'ads' ? t('tasks.watch_ads') : tab === 'spinner' ? t('tasks.spinner') : t('tasks.tasks_tab')}
+              {tab === 'ads' ? (
+                <span className="flex items-center justify-center gap-1.5">
+                  <span>{t('tasks.watch_ads')}</span>
+                  <span className="px-1.5 py-0.5 rounded-full bg-[#229ED9]/80 text-[8.5px] font-black uppercase text-white leading-none border border-white/20">
+                    {t('layout.soon', 'SOON')}
+                  </span>
+                </span>
+              ) : tab === 'spinner' ? (
+                t('tasks.spinner')
+              ) : (
+                t('tasks.tasks_tab')
+              )}
             </button>
           ))}
         </div>
@@ -86,13 +102,16 @@ export function Tasks() {
       {/* Tab Content */}
       {activeTab === 'earn' && (
         <div className="flex flex-col gap-5 mt-4 px-2">
-          <motion.button
-            whileTap={{ scale: 0.95 }}
+          <motion.div
+            whileTap={{ scale: 0.98 }}
             onClick={() => setActiveTab('ads')}
-            className="w-full focus:outline-none rounded-3xl"
+            className="w-full focus:outline-none rounded-3xl relative cursor-pointer"
           >
             <img src={watchAdsBtnImg} alt="Watch Ads" className="w-full h-auto object-contain" />
-          </motion.button>
+            <div className="absolute top-4 right-4 z-10 px-3 py-1 rounded-full bg-[#229ED9] text-white text-[11px] font-black uppercase tracking-wider shadow-[0_4px_12px_rgba(34,158,217,0.5)] border border-white/20">
+              {t('layout.soon', 'SOON')}
+            </div>
+          </motion.div>
           <motion.button
             whileTap={{ scale: 0.95 }}
             onClick={() => setActiveTab('spinner')}
