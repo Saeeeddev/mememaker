@@ -68,28 +68,28 @@ const Profile = () => {
 
           <div className="grid grid-cols-2 gap-3 max-w-sm mx-auto">
             {/* Energy Card */}
-            <div className="bg-black/35 backdrop-blur-md border border-white/10 rounded-[22px] p-3.5 flex flex-col items-center shadow-[0_8px_24px_rgba(0,0,0,0.3)]">
-              <div className="flex items-center gap-1.5 text-[#2AABEE] text-[11.5px] font-black uppercase tracking-wider mb-1">
-                <Zap size={13} className="fill-[#2AABEE]/30" />
+            <div className="bg-transparent rounded-[22px] p-3.5 flex flex-col items-center backdrop-blur-[2px]">
+              <div className="flex items-center gap-1.5 text-[#56b6ff] text-[11.5px] font-black uppercase tracking-wider mb-1">
+                
                 <span>{t('shop.energy', 'Energy')}</span>
               </div>
               <div className="text-[26px] font-black text-white my-0.5 flex items-center gap-1">
                 <span>{energy.toLocaleString()}</span>
-                <span className="text-[#2AABEE] text-lg">⚡</span>
+                <span className="text-[#56b6ff] text-lg">⚡</span>
               </div>
               <button
                 type="button"
                 onClick={handleGetEnergy}
-                className="mt-2 w-full py-2 rounded-[13px] bg-[#229ED9]/25 hover:bg-[#229ED9]/35 border border-[#229ED9]/50 text-[#2AABEE] text-[12px] font-extrabold active:scale-95 transition-all cursor-pointer"
+                className="mt-2.5 w-full py-2.5 rounded-[14px] bg-white text-black text-[12.5px] font-extrabold hover:bg-white/90 active:scale-95 transition-all shadow-md flex items-center justify-center gap-1 cursor-pointer"
               >
                 + {t('shop.buy', 'Get Energy')}
               </button>
             </div>
 
             {/* Stars Card */}
-            <div className="bg-black/35 backdrop-blur-md border border-white/10 rounded-[22px] p-3.5 flex flex-col items-center shadow-[0_8px_24px_rgba(0,0,0,0.3)]">
+            <div className="bg-transparent  rounded-[22px] p-3.5 flex flex-col items-center backdrop-blur-[2px]">
               <div className="flex items-center gap-1.5 text-[#f5a623] text-[11.5px] font-black uppercase tracking-wider mb-1">
-                <img src={starsIcon} alt="Stars" className="w-3.5 h-3.5 object-contain" />
+               
                 <span>{t('popups.stars', 'Stars')}</span>
               </div>
               <div className="text-[26px] font-black text-white my-0.5 flex items-center gap-1.5">
@@ -99,7 +99,7 @@ const Profile = () => {
               <button
                 type="button"
                 onClick={handleTopupStars}
-                className="mt-2 w-full py-2 rounded-[13px] bg-[#f5a623]/25 hover:bg-[#f5a623]/35 border border-[#f5a623]/50 text-[#f5a623] text-[12px] font-extrabold active:scale-95 transition-all cursor-pointer"
+                className="mt-2.5 w-full py-2.5 rounded-[14px] bg-white text-black text-[12.5px] font-extrabold hover:bg-white/90 active:scale-95 transition-all shadow-md flex items-center justify-center gap-1 cursor-pointer"
               >
                 + {t('profile.top_up', 'Top up')}
               </button>

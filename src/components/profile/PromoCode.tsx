@@ -52,7 +52,7 @@ export const PromoCode = ({ onExpand }: PromoCodeProps = {}) => {
                 {t('profile.enter_promo_desc')}
               </p>
 
-              <div className="flex gap-2">
+              <div className="flex p-1 gap-3">
                 <input 
                   type="text" 
                   placeholder={t('profile.enter_code')}

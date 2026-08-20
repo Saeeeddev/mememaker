@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Sparkles, Loader2, Zap, Crown } from 'lucide-react'
+import { Sparkles, Loader2, Zap, Crown, X } from 'lucide-react'
+import starsIcon from '@assets/icons/Stars.webp'
 import { GoogleGenAI, Type } from '@google/genai'
 import { useTranslation } from 'react-i18next'
 import { useAppStore } from '@store/useAppStore'
@@ -16,21 +17,22 @@ interface AIPanelProps {
   onClose: () => void
 }
 
-export function AIPanel({ open, templateId, templateImageUrl, onApply, onClose }: AIPanelProps) {
+export function AIPanel({ open, templateId, templateImageUrl: _templateImageUrl, onApply, onClose }: AIPanelProps) {
   const [prompt, setPrompt] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const { t } = useTranslation()
   const navigate = useNavigate()
 
-  const { energy, proPlan, freeAiGenerationsUsed, consumeAiGeneration } = useAppStore()
+  const { energy, stars, proPlan, freeAiGenerationsUsed, consumeAiGeneration } = useAppStore()
 
   const freeLeft = Math.max(0, 2 - freeAiGenerationsUsed)
   const isFree = freeLeft > 0
   const hasProQuota = Boolean(
     proPlan &&
       (proPlan.aiGenerationsLimit === 'unlimited' ||
-        proPlan.aiGenerationsUsed < proPlan.aiGenerationsLimit)
+        (typeof proPlan.aiGenerationsLimit === 'number' &&
+          proPlan.aiGenerationsUsed < proPlan.aiGenerationsLimit))
   )
 
   const handleGenerate = async () => {
@@ -58,121 +60,83 @@ export function AIPanel({ open, templateId, templateImageUrl, onApply, onClose }
       const apiKeys = apiKeyString.split(',').map((k: string) => k.trim()).filter(Boolean)
 
       const cleanTemplateId = (templateId || 'Unknown Meme').replace(/-/g, ' ')
-      
-      let imagePart = null
-      if (templateImageUrl) {
-        try {
-          const res = await fetch(templateImageUrl)
-          const blob = await res.blob()
-          const base64 = await new Promise<string>((resolve) => {
-            const reader = new FileReader()
-            reader.readAsDataURL(blob)
-            reader.onloadend = () => resolve(reader.result as string)
-          })
-          const base64Data = base64.split(',')[1]
-          let mimeType = blob.type
-          if (!mimeType || mimeType === 'application/octet-stream') {
-            mimeType = templateImageUrl.toLowerCase().endsWith('.png') ? 'image/png' : 'image/jpeg'
-          }
-          imagePart = {
-            inlineData: {
-              data: base64Data,
-              mimeType: mimeType
-            }
-          }
-        } catch (e) {
-          console.warn('Failed to fetch template image for AI', e)
-        }
-      }
+      const systemInstruction = `
+You are a witty, creative meme generator.
+The user wants to make a meme based on the template: "${cleanTemplateId}".
+Their prompt/idea is: "${prompt}".
 
-      const contents = []
-      if (imagePart) contents.push(imagePart)
-      contents.push(`Template: ${cleanTemplateId}\nSubject: ${prompt}`)
+Generate appropriate meme text captions with their layout positions.
+- Usually memes have top text and bottom text, or 1-3 captions.
+- Position coordinates (x_percent, y_percent) are 0-100 from top-left.
+  - Typical Top Text: y_percent = 5-15, x_percent = 50 (centered)
+  - Typical Bottom Text: y_percent = 80-90, x_percent = 50 (centered)
+- Keep captions punchy, funny, and relevant to the user's prompt and template.
+- Capitalize appropriately (standard meme format is ALL CAPS for impact text).
+`
 
-      let responseText = null
+      let responseText = ''
       let lastError = null
 
-      for (let i = 0; i < apiKeys.length; i++) {
-        const apiKey = apiKeys[i]
-        const ai = new GoogleGenAI({ apiKey })
-        
+      for (const key of apiKeys) {
         try {
+          const ai = new GoogleGenAI({ apiKey: key })
           const response = await ai.models.generateContent({
             model: 'gemini-2.5-flash',
-            contents: contents as any,
+            contents: prompt,
             config: {
-              systemInstruction: "You are an expert meme generator. You MUST combine the provided Template with the User's Subject.\n\nRULES:\n1. OBSERVE THE TEMPLATE: Look at the provided image. Find the natural blank spaces or intended text areas where text should go.\n2. THE JOKE: Write a FULL, funny joke that fits the template's structure based on the User's Subject. Keep it punchy (max 8 words per text box).\n3. PLACEMENT: For each text box, provide the x_percent and y_percent coordinates (0-100) of its center point relative to the image dimensions.\n4. STYLING: Suggest a font_size (15-35, default 25), text_color (hex, default #ffffff), and stroke_color (hex, default #000000). Use contrasting colors so text is readable against the image background at that location!\n5. OUTPUT: Output an array of objects.",
+              systemInstruction,
               responseMimeType: 'application/json',
               responseSchema: {
                 type: Type.OBJECT,
                 properties: {
-                  texts: {
+                  captions: {
                     type: Type.ARRAY,
                     items: {
                       type: Type.OBJECT,
                       properties: {
-                        text: { type: Type.STRING },
-                        x_percent: { type: Type.NUMBER, description: '0-100 x coordinate for text center' },
-                        y_percent: { type: Type.NUMBER, description: '0-100 y coordinate for text center' },
-                        font_size: { type: Type.NUMBER, description: 'Integer between 15 and 35' },
-                        text_color: { type: Type.STRING, description: 'Hex color code e.g. #ffffff' },
-                        stroke_color: { type: Type.STRING, description: 'Hex color code e.g. #000000' }
+                        text: { type: Type.STRING, description: 'The caption text string' },
+                        x_percent: { type: Type.NUMBER, description: 'X position 0-100 (50 for center)' },
+                        y_percent: { type: Type.NUMBER, description: 'Y position 0-100' },
                       },
-                      required: ['text', 'x_percent', 'y_percent', 'font_size', 'text_color', 'stroke_color']
-                    }
-                  }
+                      required: ['text', 'x_percent', 'y_percent'],
+                    },
+                  },
                 },
-                required: ['texts']
-              }
-            }
+                required: ['captions'],
+              },
+            },
           })
-          
+
           if (response.text) {
             responseText = response.text
             break
           }
-        } catch (err: any) {
+        } catch (err) {
           lastError = err
-          const errMsg = err?.message?.toLowerCase() || ''
-          if (errMsg.includes('429') || errMsg.includes('quota') || errMsg.includes('rate limit') || errMsg.includes('exhausted')) {
-            console.warn(`API Key ${i + 1} rate limited. Switching to next key if available...`)
-            continue
-          } else {
-            break
-          }
+          console.warn('API Key failed, trying next...', err)
         }
       }
 
-      if (responseText) {
-        const result = JSON.parse(responseText)
-        if (result.texts && Array.isArray(result.texts)) {
-          try {
-            WebApp?.HapticFeedback?.notificationOccurred?.('success')
-          } catch {}
-          onApply(result.texts)
-          setPrompt('')
-        } else {
-          setError('Failed to generate text correctly. Try again.')
-        }
-      } else if (lastError) {
-        const err = lastError as any
-        console.error(err)
-        const errMsg = err?.message || 'Unknown error'
-        if (errMsg.toLowerCase().includes('429') || errMsg.toLowerCase().includes('quota') || errMsg.toLowerCase().includes('rate limit') || errMsg.toLowerCase().includes('exhausted')) {
-          setError('All API keys are exhausted! Please wait 15 seconds and try again.')
-        } else {
-          setError(`Generation failed: ${errMsg}. Please check your API key or input.`)
-        }
+      if (!responseText) {
+        throw lastError || new Error('All AI API keys failed.')
+      }
+
+      const parsed = JSON.parse(responseText)
+      if (parsed.captions && Array.isArray(parsed.captions) && parsed.captions.length > 0) {
+        onApply(parsed.captions)
+        onClose()
       } else {
-        setError('No response from AI.')
+        setError('Could not generate meme captions. Please try another prompt.')
       }
     } catch (err: any) {
-      console.error(err)
-      setError('An unexpected error occurred.')
+      console.error('AI Meme Generation Error:', err)
+      setError(err?.message || 'Failed to generate meme text. Please try again.')
     } finally {
       setIsLoading(false)
     }
   }
+
+  if (typeof document === 'undefined') return null
 
   return createPortal(
     <AnimatePresence>
@@ -184,35 +148,78 @@ export function AIPanel({ open, templateId, templateImageUrl, onApply, onClose }
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60]"
+            className="fixed inset-0 bg-black/75 backdrop-blur-sm z-[100]"
           />
 
-          {/* Panel */}
+          {/* Panel Bottom Sheet */}
           <motion.div
             initial={{ y: '100%' }}
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
             transition={{ type: 'spring', damping: 28, stiffness: 320 }}
-            className="fixed bottom-0 left-0 right-0 bg-[#111113] rounded-t-[28px] border-t border-white/10 z-[61] px-5 pt-4 pb-10"
+            className="fixed bottom-0 left-0 right-0 bg-[#111113] rounded-t-[34px] border-t border-white/10 shadow-[0_-10px_40px_rgba(0,0,0,0.85)] z-[100] px-5 pt-4 pb-[calc(2.5rem+env(safe-area-inset-bottom))]"
           >
             {/* Handle */}
-            <div className="w-10 h-1 bg-white/25 rounded-full mx-auto mb-4" />
+            <div className="w-[50px] h-1.5 bg-white/30 rounded-full mx-auto mb-3.5 shrink-0" />
 
             {/* Title + close */}
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-white font-bold text-[16px] flex items-center gap-2">
-                <Sparkles size={18} className="text-violet-400" /> {t('editor.ai_generator')}
+              <h3 className="text-white font-extrabold text-[17px] flex items-center gap-2">
+                <Sparkles size={18} className="text-violet-400" /> {t('editor.ai_generator', 'AI Meme Text')}
               </h3>
               <button
                 onClick={onClose}
-                className="px-4 py-1.5 rounded-[12px] bg-white/10 text-white font-bold text-[14px] hover:bg-white/15 active:scale-[0.97] transition-all cursor-pointer"
+                className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/60 hover:text-white transition-colors cursor-pointer"
               >
-                {t('editor.cancel')}
+                <X size={18} />
               </button>
             </div>
 
+            {/* Top Balances & AI Quota Strip */}
+            <div className="flex items-center gap-2 mb-3.5 overflow-x-auto [&::-webkit-scrollbar]:hidden shrink-0">
+              {/* AI Balance pill */}
+              <div
+                className={`h-8 px-2.5 rounded-[10px] border flex items-center gap-1.5 shrink-0 shadow-sm ${
+                  isFree
+                    ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-400'
+                    : hasProQuota
+                      ? 'bg-[#A358DF]/15 border-[#A358DF]/40 text-[#A358DF]'
+                      : 'bg-white/5 border-white/10 text-white/50'
+                }`}
+              >
+                <Sparkles size={13} />
+                <span className="font-extrabold text-[11.5px]">
+                  {isFree
+                    ? `${freeLeft}/2 Daily AI Left`
+                    : hasProQuota
+                      ? `${proPlan?.aiGenerationsLimit === 'unlimited' ? '∞' : Math.max(0, ((proPlan?.aiGenerationsLimit as number) || 0) - (proPlan?.aiGenerationsUsed || 0))} AI Gens Left`
+                      : '5 ⚡ / Generation'}
+                </span>
+              </div>
+
+              {/* Energy balance pill */}
+              <div className="h-8 px-2.5 rounded-[10px] bg-[#141416] border border-white/10 flex items-center gap-1.5 shrink-0 shadow-sm">
+                <Zap size={13} className="text-[#2AABEE] fill-[#2AABEE]/30" />
+                <span className="text-white font-black text-[12px]">{energy.toLocaleString()} ⚡</span>
+              </div>
+
+              {/* Stars balance pill */}
+              <div className="h-8 px-2.5 rounded-[10px] bg-[#141416] border border-white/10 flex items-center gap-1.5 shrink-0 shadow-sm">
+                <img src={starsIcon} alt="Stars" className="w-3.5 h-3.5 object-contain" />
+                <span className="text-white font-black text-[12px]">{stars.toLocaleString()}</span>
+              </div>
+
+              {/* Pro badge if active */}
+              {proPlan && (
+                <div className="h-8 px-2 rounded-[10px] bg-[#f5a623]/20 border border-[#f5a623]/40 flex items-center gap-1 text-[#f5a623] shrink-0 font-black text-[11px] shadow-sm">
+                  <Crown size={12} />
+                  <span>PRO</span>
+                </div>
+              )}
+            </div>
+
             {/* Daily Limit & Cost Banner */}
-            <div className="mb-3.5 p-3 rounded-[16px] bg-white/[0.04] border border-white/8 flex flex-col gap-2">
+            <div className="mb-3.5 p-3 rounded-[16px] bg-white/[0.04] border border-white/8 flex flex-col gap-2 shadow-sm">
               <div className="flex items-center justify-between">
                 {isFree ? (
                   <div className="flex items-center gap-2">
@@ -235,7 +242,7 @@ export function AIPanel({ open, templateId, templateImageUrl, onApply, onClose }
                     </div>
                     <div>
                       <div className="text-[12.5px] font-extrabold text-[#f5a623] leading-tight">
-                        {proPlan?.name}: {proPlan?.aiGenerationsLimit === 'unlimited' ? '∞ Unlimited' : `${Math.max(0, (proPlan?.aiGenerationsLimit as number) - (proPlan?.aiGenerationsUsed || 0))} Gens Left`}
+                        {proPlan?.name}: {proPlan?.aiGenerationsLimit === 'unlimited' ? '∞ Unlimited' : `${Math.max(0, ((proPlan?.aiGenerationsLimit as number) || 0) - (proPlan?.aiGenerationsUsed || 0))} Gens Left`}
                       </div>
                       <div className="text-[10.5px] text-white/40 font-medium">
                         {proPlan?.aiGenerationsLimit === 'unlimited' ? 'Unlimited AI Text Prompts' : `${proPlan?.aiGenerationsUsed} / ${proPlan?.aiGenerationsLimit} monthly quota used`}
@@ -284,7 +291,7 @@ export function AIPanel({ open, templateId, templateImageUrl, onApply, onClose }
                   <div
                     className="h-full rounded-full bg-gradient-to-r from-[#f5a623] to-[#f8cd46]"
                     style={{
-                      width: `${Math.min(100, Math.round(((proPlan?.aiGenerationsUsed || 0) / (proPlan?.aiGenerationsLimit as number)) * 100))}%`,
+                      width: `${Math.min(100, Math.round(((proPlan?.aiGenerationsUsed || 0) / ((proPlan?.aiGenerationsLimit as number) || 1)) * 100))}%`,
                     }}
                   />
                 </div>
