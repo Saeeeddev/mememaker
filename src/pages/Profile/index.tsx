@@ -7,7 +7,6 @@ import { MyMemes } from '@components/profile/MyMemes'
 import { InviteFriends } from '@components/profile/InviteFriends'
 import { PromoCode } from '@components/profile/PromoCode'
 import GradientWaves from '@components/profile/GradientWaves'
-import { Zap } from 'lucide-react'
 import starsIcon from '@assets/icons/Stars.webp'
 import { WebApp } from '@utils/telegram'
 
