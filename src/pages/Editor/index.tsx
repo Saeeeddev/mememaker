@@ -114,6 +114,7 @@ export function Editor() {
   const [showDrawSettings, setShowDrawSettings] = useState(false)
   const [isPickerReady, setIsPickerReady] = useState(false)
   const [isTemplateApplying, setIsTemplateApplying] = useState(false)
+  const [isImageLoading, setIsImageLoading] = useState(false)
   const [showAIPanel, setShowAIPanel] = useState(false)
   const [isSaveModalOpen, setIsSaveModalOpen] = useState(false)
   const [textEdit, setTextEdit] = useState<TextEditState>({
@@ -366,6 +367,7 @@ export function Editor() {
   // ── Go to editor with a chosen template ──
   const goToEdit = useCallback((src: string) => {
     setIsTemplateApplying(true)
+    setIsImageLoading(true)
     
     // Allow UI to paint the loading spinner first
     setTimeout(() => {
@@ -378,6 +380,7 @@ export function Editor() {
         setCanvasKey(k => k + 1)
         setPickerSelectedSrc(null)
         setIsTemplateApplying(false)
+        setIsImageLoading(false)
       }, 350)
     }, 50)
   }, [])
@@ -724,22 +727,31 @@ export function Editor() {
   async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
+    setIsImageLoading(true)
     try {
       const src = await getResizedImageURL(file)
       goToEdit(src)
     } catch (err) {
       console.error('Failed to load image', err)
+      setIsImageLoading(false)
+    } finally {
+      e.target.value = ''
     }
   }
 
   async function handleAddImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
-    if (!file || !fabricRef.current) return
-    const fc = fabricRef.current as any
-    const fabric = window.fabric
+    if (!file || !selectedSrc || !fabricRef.current) return
+    setIsImageLoading(true)
     try {
       const src = await getResizedImageURL(file)
+      const fc = fabricRef.current as any
+      const fabric = window.fabric
       fabric.Image.fromURL(src, (img: any) => {
+        if (!img) {
+          setIsImageLoading(false)
+          return
+        }
         img.scaleToWidth(fc.width / 2)
         img.set({ 
           originX: 'center',
@@ -751,9 +763,13 @@ export function Editor() {
         fc.setActiveObject(img)
         fc.renderAll()
         saveHistory()
+        setIsImageLoading(false)
       })
     } catch (err) {
       console.error('Failed to add image', err)
+      setIsImageLoading(false)
+    } finally {
+      e.target.value = ''
     }
   }
 
@@ -780,8 +796,11 @@ export function Editor() {
       {!selectedSrc ? (
         <div className="flex flex-col h-full bg-[#0e0e10]">
           <EditorTopBar
-            onAddImage={() => addImageInputRef.current?.click()}
+            hasTemplate={false}
+            onAddImage={() => {}}
             onChangeTemplate={openPicker}
+            onOpenAI={() => setShowAIPanel(true)}
+            onRecent={openPicker}
           />
 
           {/* Empty canvas placeholder */}
@@ -818,8 +837,14 @@ export function Editor() {
           {/* ── Top bar ── */}
           {!isFullScreen && (
             <EditorTopBar
+              hasTemplate={true}
               onAddImage={() => addImageInputRef.current?.click()}
               onChangeTemplate={openPicker}
+              onOpenAI={() => {
+                if (isCropping) cancelCrop()
+                setShowAIPanel(true)
+              }}
+              onRecent={openPicker}
             />
           )}
 
@@ -1369,6 +1394,25 @@ export function Editor() {
                 <div className="h-4 shrink-0" />
               )}
             </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Global Image Loading Overlay ── */}
+      <AnimatePresence>
+        {(isImageLoading || isTemplateApplying) && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 z-[80] bg-black/70 backdrop-blur-sm flex flex-col items-center justify-center gap-3"
+          >
+            <div className="w-14 h-14 rounded-2xl bg-[#1c1c1e] border border-white/15 flex items-center justify-center shadow-[0_8px_32px_rgba(0,0,0,0.6)]">
+              <Loader2 className="w-7 h-7 text-[#229ED9] animate-spin" />
+            </div>
+            <span className="text-white font-bold text-[14px] tracking-wide">
+              {t('editor.loading_image', 'Loading image...')}
+            </span>
           </motion.div>
         )}
       </AnimatePresence>

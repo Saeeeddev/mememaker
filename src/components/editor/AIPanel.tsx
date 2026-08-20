@@ -2,11 +2,9 @@ import { useState } from 'react'
 import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Sparkles, Loader2, Zap, Crown, X } from 'lucide-react'
-import starsIcon from '@assets/icons/Stars.webp'
 import { GoogleGenAI, Type } from '@google/genai'
 import { useTranslation } from 'react-i18next'
 import { useAppStore } from '@store/useAppStore'
-import { useNavigate } from 'react-router-dom'
 import { WebApp } from '@utils/telegram'
 
 interface AIPanelProps {
@@ -22,9 +20,8 @@ export function AIPanel({ open, templateId, templateImageUrl: _templateImageUrl,
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const { t } = useTranslation()
-  const navigate = useNavigate()
 
-  const { energy, stars, proPlan, freeAiGenerationsUsed, consumeAiGeneration } = useAppStore()
+  const { energy, proPlan, freeAiGenerationsUsed, consumeAiGeneration } = useAppStore()
 
   const freeLeft = Math.max(0, 2 - freeAiGenerationsUsed)
   const isFree = freeLeft > 0
@@ -157,154 +154,49 @@ Generate appropriate meme text captions with their layout positions.
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
             transition={{ type: 'spring', damping: 28, stiffness: 320 }}
-            className="fixed bottom-0 left-0 right-0 bg-[#111113] rounded-t-[34px] border-t border-white/10 shadow-[0_-10px_40px_rgba(0,0,0,0.85)] z-[100] px-5 pt-4 pb-[calc(2.5rem+env(safe-area-inset-bottom))]"
+            className="fixed bottom-0 left-0 right-0 bg-[#111113] rounded-t-[32px] border-t border-white/10 shadow-[0_-10px_40px_rgba(0,0,0,0.85)] z-[100] px-3.5 pt-3.5 pb-[calc(2rem+env(safe-area-inset-bottom))]"
           >
             {/* Handle */}
-            <div className="w-[50px] h-1.5 bg-white/30 rounded-full mx-auto mb-3.5 shrink-0" />
+            <div className="w-[44px] h-1 bg-white/25 rounded-full mx-auto mb-3 shrink-0" />
 
-            {/* Title + close */}
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-white font-extrabold text-[17px] flex items-center gap-2">
+            {/* Title, AI Balance, and Close */}
+            <div className="flex items-center justify-between gap-2 mb-3.5">
+              <h3 className="text-white font-extrabold text-[16.5px] flex items-center gap-2 shrink-0">
                 <Sparkles size={18} className="text-violet-400" /> {t('editor.ai_generator', 'AI Meme Text')}
               </h3>
-              <button
-                onClick={onClose}
-                className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/60 hover:text-white transition-colors cursor-pointer"
-              >
-                <X size={18} />
-              </button>
-            </div>
 
-            {/* Top Balances & AI Quota Strip */}
-            <div className="flex items-center gap-2 mb-3.5 overflow-x-auto [&::-webkit-scrollbar]:hidden shrink-0">
-              {/* AI Balance pill */}
-              <div
-                className={`h-8 px-2.5 rounded-[10px] border flex items-center gap-1.5 shrink-0 shadow-sm ${
-                  isFree
-                    ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-400'
-                    : hasProQuota
-                      ? 'bg-[#A358DF]/15 border-[#A358DF]/40 text-[#A358DF]'
-                      : 'bg-white/5 border-white/10 text-white/50'
-                }`}
-              >
-                <Sparkles size={13} />
-                <span className="font-extrabold text-[11.5px]">
-                  {isFree
-                    ? `${freeLeft}/2 Daily AI Left`
-                    : hasProQuota
-                      ? `${proPlan?.aiGenerationsLimit === 'unlimited' ? '∞' : Math.max(0, ((proPlan?.aiGenerationsLimit as number) || 0) - (proPlan?.aiGenerationsUsed || 0))} AI Gens Left`
-                      : '5 ⚡ / Generation'}
-                </span>
-              </div>
-
-              {/* Energy balance pill */}
-              <div className="h-8 px-2.5 rounded-[10px] bg-[#141416] border border-white/10 flex items-center gap-1.5 shrink-0 shadow-sm">
-                <Zap size={13} className="text-[#2AABEE] fill-[#2AABEE]/30" />
-                <span className="text-white font-black text-[12px]">{energy.toLocaleString()} ⚡</span>
-              </div>
-
-              {/* Stars balance pill */}
-              <div className="h-8 px-2.5 rounded-[10px] bg-[#141416] border border-white/10 flex items-center gap-1.5 shrink-0 shadow-sm">
-                <img src={starsIcon} alt="Stars" className="w-3.5 h-3.5 object-contain" />
-                <span className="text-white font-black text-[12px]">{stars.toLocaleString()}</span>
-              </div>
-
-              {/* Pro badge if active */}
-              {proPlan && (
-                <div className="h-8 px-2 rounded-[10px] bg-[#f5a623]/20 border border-[#f5a623]/40 flex items-center gap-1 text-[#f5a623] shrink-0 font-black text-[11px] shadow-sm">
-                  <Crown size={12} />
-                  <span>PRO</span>
-                </div>
-              )}
-            </div>
-
-            {/* Daily Limit & Cost Banner */}
-            <div className="mb-3.5 p-3 rounded-[16px] bg-white/[0.04] border border-white/8 flex flex-col gap-2 shadow-sm">
-              <div className="flex items-center justify-between">
-                {isFree ? (
-                  <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 rounded-[10px] bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0">
-                      <Sparkles size={14} />
-                    </div>
-                    <div>
-                      <div className="text-[12.5px] font-extrabold text-emerald-400 leading-tight">
-                        {freeLeft}/2 Free Daily AI Generations
-                      </div>
-                      <div className="text-[10.5px] text-white/40 font-medium">
-                        Resets daily • 5 ⚡ Energy after free limit
-                      </div>
-                    </div>
-                  </div>
-                ) : hasProQuota ? (
-                  <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 rounded-[10px] bg-[#f5a623]/15 border border-[#f5a623]/30 flex items-center justify-center text-[#f5a623] shrink-0">
-                      <Crown size={14} />
-                    </div>
-                    <div>
-                      <div className="text-[12.5px] font-extrabold text-[#f5a623] leading-tight">
-                        {proPlan?.name}: {proPlan?.aiGenerationsLimit === 'unlimited' ? '∞ Unlimited' : `${Math.max(0, ((proPlan?.aiGenerationsLimit as number) || 0) - (proPlan?.aiGenerationsUsed || 0))} Gens Left`}
-                      </div>
-                      <div className="text-[10.5px] text-white/40 font-medium">
-                        {proPlan?.aiGenerationsLimit === 'unlimited' ? 'Unlimited AI Text Prompts' : `${proPlan?.aiGenerationsUsed} / ${proPlan?.aiGenerationsLimit} monthly quota used`}
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 rounded-[10px] bg-[#2AABEE]/15 border border-[#2AABEE]/30 flex items-center justify-center text-[#2AABEE] shrink-0">
-                      <Zap size={14} className="fill-[#2AABEE]/30" />
-                    </div>
-                    <div>
-                      <div className="text-[12.5px] font-extrabold text-[#2AABEE] leading-tight">
-                        Free limit reached • 5 ⚡ Energy
-                      </div>
-                      <div className="text-[10.5px] text-white/40 font-medium">
-                        Balance: {energy.toLocaleString()} ⚡ Energy
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {hasProQuota && (
-                  <span className="px-2 py-0.5 rounded-full bg-[#f5a623]/20 text-[#f5a623] font-black text-[9.5px] border border-[#f5a623]/30 shrink-0">
-                    PRO
+              <div className="flex items-center gap-2 min-w-0">
+                {/* AI Balance pill only */}
+                <div
+                  className={`h-8 px-2.5 rounded-[10px] border flex items-center gap-1.5 shadow-sm shrink-0 ${
+                    isFree
+                      ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-400'
+                      : hasProQuota
+                        ? 'bg-[#A358DF]/15 border-[#A358DF]/40 text-[#A358DF]'
+                        : 'bg-[#2AABEE]/15 border-[#2AABEE]/40 text-[#2AABEE]'
+                  }`}
+                >
+                  {isFree || hasProQuota ? (
+                    <Sparkles size={13} />
+                  ) : (
+                    <Zap size={13} className="text-[#2AABEE] fill-[#2AABEE]/30" />
+                  )}
+                  <span className="font-extrabold text-[11.5px]">
+                    {isFree
+                      ? t('editor.ai_balance_count', { count: freeLeft, defaultValue: `${freeLeft} AI Balance` })
+                      : hasProQuota
+                        ? (proPlan?.aiGenerationsLimit === 'unlimited' ? t('editor.unlimited_ai', '∞ Unlimited') : t('editor.ai_quota_left', { count: Math.max(0, ((proPlan?.aiGenerationsLimit as number) || 0) - (proPlan?.aiGenerationsUsed || 0)), defaultValue: `${Math.max(0, ((proPlan?.aiGenerationsLimit as number) || 0) - (proPlan?.aiGenerationsUsed || 0))} AI Balance` }))
+                        : t('editor.per_generation', '5 ⚡ / Generation')}
                   </span>
-                )}
+                </div>
 
-                {!isFree && !hasProQuota && energy < 5 && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      onClose()
-                      navigate('/shop', { state: { tab: 'energy' } })
-                    }}
-                    className="px-2.5 py-1 rounded-[10px] bg-[#229ED9]/20 border border-[#229ED9]/40 text-[#2AABEE] text-[11px] font-bold shrink-0 hover:bg-[#229ED9]/30"
-                  >
-                    + Buy
-                  </button>
-                )}
+                <button
+                  onClick={onClose}
+                  className="w-7 h-7 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/60 hover:text-white transition-colors cursor-pointer shrink-0"
+                >
+                  <X size={16} />
+                </button>
               </div>
-
-              {/* Progress bar for Pro quota or Free limit */}
-              {hasProQuota && proPlan?.aiGenerationsLimit !== 'unlimited' && (
-                <div className="w-full h-1.5 rounded-full bg-white/10 overflow-hidden mt-0.5">
-                  <div
-                    className="h-full rounded-full bg-gradient-to-r from-[#f5a623] to-[#f8cd46]"
-                    style={{
-                      width: `${Math.min(100, Math.round(((proPlan?.aiGenerationsUsed || 0) / ((proPlan?.aiGenerationsLimit as number) || 1)) * 100))}%`,
-                    }}
-                  />
-                </div>
-              )}
-
-              {isFree && (
-                <div className="w-full h-1.5 rounded-full bg-white/10 overflow-hidden mt-0.5">
-                  <div
-                    className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-400"
-                    style={{ width: `${(freeAiGenerationsUsed / 2) * 100}%` }}
-                  />
-                </div>
-              )}
             </div>
 
             {/* Prompt input */}
@@ -330,27 +222,27 @@ Generate appropriate meme text captions with their layout positions.
               {isLoading ? (
                 <>
                   <Loader2 className="w-5 h-5 animate-spin" />
-                  {t('editor.generating', 'Generating Meme...')}
+                  <span>{t('editor.generating', 'Generating...')}</span>
                 </>
               ) : isFree ? (
                 <>
                   <Sparkles size={18} />
-                  <span>Generate with AI (Free • {freeLeft} left)</span>
+                  <span>{t('editor.generate_ai_free', { count: freeLeft, defaultValue: `Generate with AI (Free • ${freeLeft} left)` })}</span>
                 </>
               ) : hasProQuota ? (
                 <>
                   <Crown size={18} />
-                  <span>Generate with AI (Pro Quota)</span>
+                  <span>{t('editor.generate_ai_pro', 'Generate with AI (Pro Quota)')}</span>
                 </>
               ) : energy >= 5 ? (
                 <>
                   <Zap size={18} className="text-[#2AABEE] fill-[#2AABEE]/40" />
-                  <span>Generate with AI (5 ⚡ Energy)</span>
+                  <span>{t('editor.generate_ai_energy', 'Generate with AI (5 ⚡ Energy)')}</span>
                 </>
               ) : (
                 <>
                   <Zap size={18} className="text-white/40" />
-                  <span>Insufficient Energy (5 ⚡ Required)</span>
+                  <span>{t('editor.insufficient_energy', 'Insufficient Energy (5 ⚡ Required)')}</span>
                 </>
               )}
             </button>
